@@ -1,11 +1,12 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import tokenStorage from '../storage'
+import { useAuth } from '../AuthContext'
 
 export default function RequireAuth({ children }: { children: JSX.Element }) {
   const location = useLocation()
-  if (!tokenStorage.access) {
+  const { accessToken, initializing } = useAuth()
+  if (initializing) return null
+  if (!accessToken) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
   return children
 }
-

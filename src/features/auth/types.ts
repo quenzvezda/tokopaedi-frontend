@@ -5,8 +5,6 @@ export type LoginRequest = {
 
 export type LoginResponse = {
   accessToken?: string
-  refreshToken?: string
   tokenType?: string
   [key: string]: unknown
 }
-

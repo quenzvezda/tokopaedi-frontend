@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Playwright E2E (UI mode)" type="js.build_tools.npm" factoryName="npm">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="test:e2e" />
+    </scripts>
+    <arguments value="-- --ui" />
+    <node-interpreter value="project" />
+    <envs>
+      <env name="CI" value="false" />
+      <env name="E2E_USER" value="admin" />
+      <env name="E2E_PASS" value="admin123" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>

@@ -21,11 +21,29 @@ Key Files
 - .idea/runConfigurations/Vite_Dev_Server.xml → npm run dev with envs
 
 Current Behavior
-- Login posts to /auth/api/v1/auth/login and stores access/refresh token in storage, then redirects to '/'.
-- Axios attaches Bearer access token and attempts refresh on 401 using refresh endpoint.
+- Login posts to /auth/api/v1/auth/login. Backend sets httpOnly refresh cookie; frontend stores only the access token (in memory), then redirects to '/'.
+- Axios attaches Bearer access token and attempts refresh on 401 using the refresh endpoint (cookie-based) with withCredentials=true.
 - RBAC not yet enforced in frontend (menu/route gating TBD); roles available in JWT payload.
 - No 403/404 pages yet.
 
+Verification (CORS & Auth)
+- Preflight (dev):
+  curl -i -X OPTIONS \
+    -H "Origin: http://localhost:5173" \
+    -H "Access-Control-Request-Method: POST" \
+    -H "Access-Control-Request-Headers: Content-Type, Authorization" \
+    http://localhost:8080/auth/api/v1/auth/login
+- Login (ambil cookie):
+  curl -i -X POST \
+    -H "Origin: http://localhost:5173" \
+    -H "Content-Type: application/json" \
+    --data '{"username":"demo","password":"demo"}' \
+    http://localhost:8080/auth/api/v1/auth/login
+- Refresh (gunakan cookie dari login):
+  curl -i -X POST \
+    -H "Origin: http://localhost:5173" \
+    --cookie "<REFRESH_COOKIE_NAME>=<value>" \
+    http://localhost:8080/auth/api/v1/auth/refresh
 
 ROADMAP (FRONTEND FIRST)
 ========================
@@ -101,9 +119,9 @@ BACKEND AGENT BRIEF (SPRING CLOUD GATEWAY / SPRING SECURITY)
 ============================================================
 
 Goal
-- Refresh token via httpOnly cookie; access token via response body (atau header) untuk FE
+- Refresh token via httpOnly cookie ONLY (jangan kembalikan refresh token di body); access token via response body (atau header) untuk FE
 - CORS ketat (origin spesifik, bukan '*') dan allowCredentials=true
-- Endpoint logout untuk mencabut refresh token dan menghapus cookie
+- Endpoint logout untuk mencabut refresh token dan menghapus cookie. Status: TODO (belum tersedia di backend)
 
 Environment Variables (contoh)
 - FRONTEND_ORIGINS = http://localhost:5173,https://staging.example.com,https://app.example.com
@@ -132,9 +150,10 @@ Login Flow
 Refresh Flow (POST /auth/api/v1/auth/refresh)
 1) Baca refresh token dari cookie httpOnly
 2) Validasi + rotasi (revoke old, issue new refresh & access)
-3) Set-cookie refresh baru (httpOnly) dan kembalikan access token baru di body
+3) Set-cookie refresh baru (httpOnly) dan kembalikan HANYA access token baru di body (jangan kembalikan refresh token di body)
 
 Logout Flow (POST /auth/api/v1/auth/logout)
+Status: TODO (belum diimplementasikan di backend)
 1) Baca refresh token dari cookie, revoke di store (DB/Redis) berdasarkan jti/id
 2) Clear cookie: Set-Cookie: REFRESH_COOKIE_NAME=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure(HTTPS only)
 3) 204 No Content
@@ -143,6 +162,7 @@ Security Notes
 - Simpan refresh token dalam DB (hash) dengan rotasi (rolling) untuk membatasi replay
 - Pastikan akses token berumur pendek; roles ada di klaim
 - Jangan pernah gunakan origin '*' jika allowCredentials=true
+- Jangan kirimkan refresh token di body (gunakan cookie httpOnly saja)
 
 Spring (contoh konfigurasi ringkas)
 - CORS: WebMvcConfigurer / CorsConfigurationSource dengan allowedOrigins dari FRONTEND_ORIGINS (split comma)
@@ -152,9 +172,9 @@ Spring (contoh konfigurasi ringkas)
 
 Acceptance Criteria
 - FE dapat login → cookie refresh terpasang, access token dikembalikan
-- FE dapat refresh tanpa akses ke cookie (httpOnly) dan mendapatkan access token baru
+- FE dapat refresh tanpa akses ke cookie (httpOnly) dan mendapatkan access token baru di body; refresh cookie di-rotate; refresh token tidak dikembalikan di body
 - FE dapat logout → cookie terhapus, refresh dicabut, akses ke route protected gagal
-- CORS berfungsi untuk origin spesifik (dev/staging/prod), bukan '*'
+- CORS berfungsi untuk origin spesifik (dev/staging/prod), bukan '*', dan allowCredentials=true
 
 
 CHECKLIST QUICK START (After Backend Cookie Migration)

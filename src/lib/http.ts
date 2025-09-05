@@ -1,5 +1,4 @@
 import axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios'
-import tokenStorage from '../features/auth/storage'
 
 const baseURL = import.meta.env.VITE_GATEWAY_BASE || 'http://localhost:8080'
 const refreshPath = import.meta.env.VITE_AUTH_REFRESH_PATH || '/auth/api/v1/auth/refresh'
@@ -9,11 +8,28 @@ export const http: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: false,
+  withCredentials: true,
 })
 
+let accessTokenGetter: (() => string | null) | null = null
+let accessTokenSetter: ((t: string | null) => void) | null = null
+let onAuthLogout: (() => void) | null = null
+let refreshing: Promise<string | null> | null = null
+
+export function setAccessTokenGetter(fn: () => string | null) {
+  accessTokenGetter = fn
+}
+
+export function setAccessTokenSetter(fn: (t: string | null) => void) {
+  accessTokenSetter = fn
+}
+
+export function setOnAuthLogout(fn: () => void) {
+  onAuthLogout = fn
+}
+
 http.interceptors.request.use((config) => {
-  const token = tokenStorage.access
+  const token = accessTokenGetter?.() || null
   if (token) {
     config.headers = config.headers || {}
     config.headers.Authorization = `Bearer ${token}`
@@ -21,21 +37,19 @@ http.interceptors.request.use((config) => {
   return config
 })
 
-let refreshing: Promise<string | null> | null = null
-
 async function refreshToken(): Promise<string | null> {
-  const currentRefresh = tokenStorage.refresh
-  if (!currentRefresh) return null
   const response = await axios.post(
     baseURL + refreshPath,
-    { refreshToken: currentRefresh },
-    { headers: { 'Content-Type': 'application/json' } },
+    {},
+    { headers: { 'Content-Type': 'application/json' }, withCredentials: true },
   )
   const nextAccess = (response.data as any)?.accessToken ?? null
-  const nextRefresh = (response.data as any)?.refreshToken ?? currentRefresh
-  tokenStorage.access = nextAccess
-  tokenStorage.refresh = nextRefresh
+  if (accessTokenSetter) accessTokenSetter(nextAccess)
   return nextAccess
+}
+
+export async function triggerRefresh() {
+  return refreshToken()
 }
 
 http.interceptors.response.use(
@@ -56,7 +70,7 @@ http.interceptors.response.use(
       } catch (e) {
         refreshing = null
       }
-      tokenStorage.clear()
+      if (onAuthLogout) onAuthLogout()
       if (typeof window !== 'undefined') {
         window.location.href = '/login'
       }

@@ -16,7 +16,7 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { login } from '../api'
-import tokenStorage from '../storage'
+import { useAuth } from '../AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 export default function Login() {
@@ -28,6 +28,7 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation() as any
   const from = location.state?.from?.pathname || '/'
+  const { setAccessToken } = useAuth()
 
   const cardBg = useColorModeValue('white', 'gray.800')
   const border = useColorModeValue('gray.200', 'gray.700')
@@ -39,9 +40,7 @@ export default function Login() {
     try {
       const data = await login({ usernameOrEmail, password })
       const token = (data as any).accessToken
-      const refresh = (data as any).refreshToken
-      if (token) tokenStorage.access = token
-      if (refresh) tokenStorage.refresh = refresh
+      if (token) setAccessToken(token)
       toast({ title: 'Signed in', status: 'success' })
       navigate(from, { replace: true })
     } catch (err: any) {
