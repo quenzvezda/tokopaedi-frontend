@@ -26,3 +26,21 @@ export function decodeJwtExp(token: string): number | null {
     return null
   }
 }
+
+export function decodeJwtPayload<T = any>(token: string): T | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length < 2) return null
+    return JSON.parse(base64UrlDecode(parts[1] || '')) as T
+  } catch {
+    return null
+  }
+}
+
+export function extractRoles(payload: any): string[] {
+  if (!payload) return []
+  const r = payload.roles ?? payload.authorities ?? payload.scope ?? []
+  if (Array.isArray(r)) return r.map(String)
+  if (typeof r === 'string') return r.split(/\s+/g).filter(Boolean)
+  return []
+}

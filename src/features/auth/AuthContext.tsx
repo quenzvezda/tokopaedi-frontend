@@ -1,17 +1,19 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { setAccessTokenGetter, setAccessTokenSetter, setOnAuthLogout, triggerRefresh } from '../../lib/http'
-import { decodeJwtExp } from '../../lib/jwt'
+import { decodeJwtExp, decodeJwtPayload, extractRoles } from '../../lib/jwt'
 
 type AuthState = {
   accessToken: string | null
   exp: number | null
   initializing: boolean
+  roles: string[]
 }
 
 type AuthContextValue = AuthState & {
   setAccessToken: (token: string | null) => void
   refresh: () => Promise<string | null>
   logoutLocal: () => void
+  isAuthenticated: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -20,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessTokenState] = useState<string | null>(null)
   const [exp, setExp] = useState<number | null>(null)
   const [initializing, setInitializing] = useState(true)
+  const [roles, setRoles] = useState<string[]>([])
   const refreshTimer = useRef<number | null>(null)
   const bcRef = useRef<BroadcastChannel | null>(null)
 
@@ -61,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setAccessToken = useCallback(
     (token: string | null) => {
       setAccessTokenState(token)
+      const payload = token ? decodeJwtPayload<any>(token) : null
+      setRoles(extractRoles(payload))
       scheduleRefresh(token)
       broadcastToken(token)
     },
@@ -98,11 +103,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     bc.onmessage = (ev) => {
       const data = ev.data as any
       if (data?.type === 'tokenUpdated') {
-        setAccessTokenState(data.token ?? null)
-        scheduleRefresh(data.token ?? null)
+        const t = data.token ?? null
+        setAccessTokenState(t)
+        const payload = t ? decodeJwtPayload<any>(t) : null
+        setRoles(extractRoles(payload))
+        scheduleRefresh(t)
       } else if (data?.type === 'logout') {
         setAccessTokenState(null)
         setExp(null)
+        setRoles([])
       }
     }
 
@@ -123,14 +132,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refresh, scheduleRefresh])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ accessToken, exp, initializing, setAccessToken, refresh, logoutLocal }),
-    [accessToken, exp, initializing, refresh, setAccessToken, logoutLocal],
+    () => ({ accessToken, exp, initializing, setAccessToken, refresh, logoutLocal, roles, isAuthenticated: !!accessToken }),
+    [accessToken, exp, initializing, refresh, setAccessToken, logoutLocal, roles],
   )
 
   if (import.meta.env.DEV) {
     ;(window as any).__setAccessToken = setAccessToken
     ;(window as any).__hasToken = !!accessToken
     ;(window as any).__authInitializing = initializing
+    ;(window as any).__roles = roles
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

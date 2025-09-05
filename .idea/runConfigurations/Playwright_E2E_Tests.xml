@@ -10,6 +10,8 @@
       <env name="CI" value="false" />
       <env name="E2E_USER" value="admin" />
       <env name="E2E_PASS" value="admin123" />
+      <env name="E2E_NONADMIN_USER" value="ramag123" />
+      <env name="E2E_NONADMIN_PASS" value="n0c0d3123" />
     </envs>
     <method v="2" />
   </configuration>
