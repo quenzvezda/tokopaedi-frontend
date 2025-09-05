@@ -1,0 +1,176 @@
+PROJECT SUMMARY
+================
+
+Stack & Libraries
+- Frontend: Vite 7 + React 18 + TypeScript
+- UI: Chakra UI v2
+- Routing: React Router v6
+- HTTP: axios (with request/response interceptors)
+- Dev tooling: IntelliJ Run Configuration, .env.* for VITE_*
+
+Key Files
+- src/lib/http.ts            → axios instance, baseURL from VITE_GATEWAY_BASE, 401 refresh via VITE_AUTH_REFRESH_PATH
+- src/features/auth/api.ts   → login() call
+- src/features/auth/storage.ts → simple access/refresh token storage (localStorage)
+- src/features/auth/pages/Login.tsx → centered login form (username/email + password)
+- src/features/auth/components/RequireAuth.tsx → route guard redirects to /login if no token
+- src/features/misc/pages/Welcome.tsx → post-login landing page
+- src/App.tsx → Router setup (/, /login, fallback to /)
+- src/index.css → minimal CSS reset (let Chakra handle UI)
+- .env.development / .env.example → VITE_GATEWAY_BASE, VITE_AUTH_REFRESH_PATH
+- .idea/runConfigurations/Vite_Dev_Server.xml → npm run dev with envs
+
+Current Behavior
+- Login posts to /auth/api/v1/auth/login and stores access/refresh token in storage, then redirects to '/'.
+- Axios attaches Bearer access token and attempts refresh on 401 using refresh endpoint.
+- RBAC not yet enforced in frontend (menu/route gating TBD); roles available in JWT payload.
+- No 403/404 pages yet.
+
+
+ROADMAP (FRONTEND FIRST)
+========================
+
+Phase 1 — Auth Hardening (High Priority)
+1) Move to cookie httpOnly for refresh token
+   - FE keeps access token in memory (not localStorage)
+   - BE sets refresh cookie (httpOnly, Secure in HTTPS, SameSite=Lax/Strict)
+   - FE axios: withCredentials=true; refresh flow uses cookie only
+2) Token refresh strategy
+   - Schedule silent refresh ~60–120s sebelum exp (berdasarkan klaim exp access token)
+   - Tetap handle 401 fallback ke refresh
+3) Multi-tab coordination
+   - BroadcastChannel/storage event untuk sinkronisasi logout/refresh
+
+Phase 2 — AuthContext + RBAC Integration
+1) AuthProvider + useAuth()
+   - Menyimpan state: user (optional), roles[], accessToken (memory), isAuthenticated, exp
+   - Decode JWT payload (roles, exp) saat set access token
+2) Helpers RBAC
+   - useHasRole(), HasRole component, route meta { roles: [...] }
+   - Guard route by roles; fallback ke 403
+3) Fallback pages
+   - 403 (Forbidden) dan 404 (Not Found) pages + wiring di Router
+
+Phase 3 — Login UX & Validation
+1) react-hook-form + zod
+   - Validasi email/username dan password (required, min-length, pattern opsional)
+   - Tampilkan error dari server secara spesifik
+2) UX
+   - Loading states, submit disabled, focus ring/accessibility
+
+Phase 4 — Logout
+1) FE: tombol Logout di layout terlindungi
+   - Clear access token (memory), panggil BE /auth/logout untuk mencabut refresh cookie dan refresh token server-side
+   - Redirect ke /login
+2) Tombol/opsi logout di menu dan auto-logout saat refresh gagal
+
+Phase 5 — Observability & Testing
+1) E2E: alur login → akses protected route → refresh → logout (happy path & negative)
+2) MSW untuk mock API di dev/test
+3) Unit test guard RBAC (roles), parsing JWT, dan AuthProvider
+4) Opsional: Sentry untuk error jaringan/logik auth (tanpa bocor PII)
+
+Phase 6 — Production Readiness & Security Headers
+1) CSP ketat (script-src 'self' + nonce/sha), X-Frame-Options/Frame-ancestors, HSTS, Referrer-Policy, X-Content-Type-Options
+2) Reverse proxy/Ingress routing same-origin (map /auth → gateway) untuk meminimalkan CORS di prod
+3) Validasi env build-time (fail-fast bila env wajib kosong)
+
+
+FRONTEND TASK DETAILS (IMPLEMENTATION NOTES)
+===========================================
+
+Auth State & Storage
+- Simpan access token di memory (AuthContext). Jangan taruh di localStorage/sessionStorage jika memungkinkan.
+- Refresh token tidak diakses FE: dikelola sebagai httpOnly cookie oleh backend.
+
+Axios
+- http.ts: set withCredentials=true
+- Request interceptor: attach Bearer access token dari memory
+- Response interceptor: pada 401 → panggil refresh (cookie), perbarui access token, retry request; jika gagal → logout total
+
+RBAC via JWT
+- Decode payload JWT (mis. jose.decodeJwt) → roles[]
+- Untuk UI/UX (hide/show menu), gunakan roles dari token
+- Enforcement tetap oleh backend; FE hanya kosmetik & UX
+
+403/404 Pages
+- Tambahkan dua halaman dan wiring di Router; untuk 403 gunakan guard roles di route meta
+
+
+BACKEND AGENT BRIEF (SPRING CLOUD GATEWAY / SPRING SECURITY)
+============================================================
+
+Goal
+- Refresh token via httpOnly cookie; access token via response body (atau header) untuk FE
+- CORS ketat (origin spesifik, bukan '*') dan allowCredentials=true
+- Endpoint logout untuk mencabut refresh token dan menghapus cookie
+
+Environment Variables (contoh)
+- FRONTEND_ORIGINS = http://localhost:5173,https://staging.example.com,https://app.example.com
+- ACCESS_TOKEN_TTL_SECONDS = 900 (15m)
+- REFRESH_TOKEN_TTL_SECONDS = 2592000 (30d)
+- REFRESH_COOKIE_NAME = refresh_token
+- REFRESH_COOKIE_DOMAIN = localhost (ubah di staging/prod)
+- REFRESH_COOKIE_PATH = / (atau /auth)
+- REFRESH_COOKIE_SAMESITE = Lax (Strict jika tidak butuh cross-site)
+- REFRESH_COOKIE_SECURE = false (true di HTTPS)
+
+CORS (Global)
+- Izinkan Origins berdasarkan FRONTEND_ORIGINS (list spesifik; jangan '*')
+- Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+- Headers: Content-Type, Authorization
+- allowCredentials: true
+- OPTIONS preflight: balas 204/200 dengan header CORS yang sesuai + 'Vary: Origin'
+- Sertakan 'Access-Control-Allow-Origin: <origin>' & 'Vary: Origin' juga pada response POST/GET
+
+Login Flow
+1) Validasi kredensial → issue access token (JWT, exp pendek) + refresh token (opaque/JWT terpisah, rotasi)
+2) Set refresh token di cookie httpOnly:
+   - Set-Cookie: REFRESH_COOKIE_NAME=<value>; HttpOnly; Path=/; SameSite=Lax; Secure(HTTPS only); Max-Age=<ttl>
+3) Body response: { tokenType: "Bearer", accessToken: "...", expiresIn: <sec> }
+
+Refresh Flow (POST /auth/api/v1/auth/refresh)
+1) Baca refresh token dari cookie httpOnly
+2) Validasi + rotasi (revoke old, issue new refresh & access)
+3) Set-cookie refresh baru (httpOnly) dan kembalikan access token baru di body
+
+Logout Flow (POST /auth/api/v1/auth/logout)
+1) Baca refresh token dari cookie, revoke di store (DB/Redis) berdasarkan jti/id
+2) Clear cookie: Set-Cookie: REFRESH_COOKIE_NAME=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure(HTTPS only)
+3) 204 No Content
+
+Security Notes
+- Simpan refresh token dalam DB (hash) dengan rotasi (rolling) untuk membatasi replay
+- Pastikan akses token berumur pendek; roles ada di klaim
+- Jangan pernah gunakan origin '*' jika allowCredentials=true
+
+Spring (contoh konfigurasi ringkas)
+- CORS: WebMvcConfigurer / CorsConfigurationSource dengan allowedOrigins dari FRONTEND_ORIGINS (split comma)
+- Cookie: gunakan ResponseCookie.from(REFRESH_COOKIE_NAME, token).httpOnly(true).path("/").sameSite("Lax").secure(secure).maxAge(...).build()
+- Set-Cookie di header response untuk login/refresh/logout
+- Gateway: jika perlu, tambahkan global CORS untuk route /auth/**
+
+Acceptance Criteria
+- FE dapat login → cookie refresh terpasang, access token dikembalikan
+- FE dapat refresh tanpa akses ke cookie (httpOnly) dan mendapatkan access token baru
+- FE dapat logout → cookie terhapus, refresh dicabut, akses ke route protected gagal
+- CORS berfungsi untuk origin spesifik (dev/staging/prod), bukan '*'
+
+
+CHECKLIST QUICK START (After Backend Cookie Migration)
+=====================================================
+
+Frontend
+- [ ] Tambah AuthContext (in-memory access token, roles)
+- [ ] axios withCredentials=true; refresh via cookie route
+- [ ] Jadwal silent refresh sebelum exp
+- [ ] Multi-tab sync (BroadcastChannel)
+- [ ] RBAC guards + 403/404 pages
+- [ ] Logout flow FE (panggil /auth/logout + bersihkan state)
+
+Backend
+- [ ] Login: set-cookie refresh httpOnly + access token di body
+- [ ] Refresh: baca cookie, rotasi refresh, set-cookie baru, kirim access token
+- [ ] Logout: revoke refresh, clear cookie
+- [ ] CORS: origins spesifik, allowCredentials=true, OPTIONS preflight OK
+

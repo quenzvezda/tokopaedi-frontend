@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Vite Dev Server" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="dev" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs>
+      <env name="VITE_GATEWAY_BASE" value="http://localhost:8080" />
+      <env name="VITE_AUTH_REFRESH_PATH" value="/auth/api/v1/auth/refresh" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>
