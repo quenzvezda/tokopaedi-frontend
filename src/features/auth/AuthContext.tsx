@@ -1,22 +1,9 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { setAccessTokenGetter, setAccessTokenSetter, setOnAuthLogout, triggerRefresh } from '../../lib/http'
-import { decodeJwtExp, decodeJwtPayload, extractRoles } from '../../lib/jwt'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-type AuthState = {
-  accessToken: string | null
-  exp: number | null
-  initializing: boolean
-  roles: string[]
-}
+import { setAccessTokenGetter, setAccessTokenSetter, setOnAuthLogout, triggerRefresh } from '@/lib/http'
+import { decodeJwtExp, decodeJwtPayload, extractRoles } from '@/lib/jwt'
 
-type AuthContextValue = AuthState & {
-  setAccessToken: (token: string | null) => void
-  refresh: () => Promise<string | null>
-  logoutLocal: () => void
-  isAuthenticated: boolean
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+import { AuthContext, type AuthContextValue } from './context'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessTokenState] = useState<string | null>(null)
@@ -64,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setAccessToken = useCallback(
     (token: string | null) => {
       setAccessTokenState(token)
-      const payload = token ? decodeJwtPayload<any>(token) : null
+      const payload = token ? decodeJwtPayload<Record<string, unknown>>(token) : null
       setRoles(extractRoles(payload))
       scheduleRefresh(token)
       broadcastToken(token)
@@ -101,11 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const bc = new BroadcastChannel('auth')
     bcRef.current = bc
     bc.onmessage = (ev) => {
-      const data = ev.data as any
+      const data = ev.data as { type?: string; token?: string }
       if (data?.type === 'tokenUpdated') {
         const t = data.token ?? null
         setAccessTokenState(t)
-        const payload = t ? decodeJwtPayload<any>(t) : null
+        const payload = t ? decodeJwtPayload<Record<string, unknown>>(t) : null
         setRoles(extractRoles(payload))
         scheduleRefresh(t)
       } else if (data?.type === 'logout') {
@@ -137,17 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   if (import.meta.env.DEV) {
-    ;(window as any).__setAccessToken = setAccessToken
-    ;(window as any).__hasToken = !!accessToken
-    ;(window as any).__authInitializing = initializing
-    ;(window as any).__roles = roles
+    ;(window as unknown as Record<string, unknown>).__setAccessToken = setAccessToken
+    ;(window as unknown as Record<string, unknown>).__hasToken = !!accessToken
+    ;(window as unknown as Record<string, unknown>).__authInitializing = initializing
+    ;(window as unknown as Record<string, unknown>).__roles = roles
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
-}
+// useAuth moved to separate file to satisfy react-refresh rule

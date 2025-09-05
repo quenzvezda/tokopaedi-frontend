@@ -1,14 +1,7 @@
 import React from 'react'
-import { useAuth } from './AuthContext'
 import { Navigate, useLocation } from 'react-router-dom'
 
-export function useHasRole(required: string | string[]): boolean {
-  const { roles } = useAuth()
-  const need = Array.isArray(required) ? required : [required]
-  if (need.length === 0) return true
-  const set = new Set(roles.map((r) => r.toUpperCase()))
-  return need.some((r) => set.has(String(r).toUpperCase()))
-}
+import { useHasRole } from './hooks/useHasRole'
 
 export function HasRole({ roles, children }: { roles: string | string[]; children: React.ReactNode }) {
   const ok = useHasRole(roles)
@@ -24,4 +17,3 @@ export function RequireRoles({ roles, children }: { roles: string | string[]; ch
   }
   return children
 }
-

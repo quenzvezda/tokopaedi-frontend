@@ -3,28 +3,42 @@ PROJECT SUMMARY
 
 Stack & Libraries
 - Frontend: Vite 7 + React 18 + TypeScript
-- UI: Chakra UI v2
+- UI: Chakra UI (single styling system)
 - Routing: React Router v6
-- HTTP: axios (with request/response interceptors)
-- Dev tooling: IntelliJ Run Configuration, .env.* for VITE_*
+- Server state: TanStack Query
+- Forms & Validation: React Hook Form + Zod
+- HTTP: axios via `src/shared/lib/fetcher.ts` (with credentials, refresh on 401)
+- Testing: Vitest + React Testing Library (unit/component), Playwright (E2E in `e2e/`)
+- Quality: ESLint (import/order), Prettier, Husky + lint-staged
 
 Key Files
-- src/lib/http.ts            → axios instance, baseURL from VITE_GATEWAY_BASE, 401 refresh via VITE_AUTH_REFRESH_PATH
-- src/features/auth/api.ts   → login() call
-- src/features/auth/storage.ts → simple access/refresh token storage (localStorage)
-- src/features/auth/pages/Login.tsx → centered login form (username/email + password)
-- src/features/auth/components/RequireAuth.tsx → route guard redirects to /login if no token
-- src/features/misc/pages/Welcome.tsx → post-login landing page
-- src/App.tsx → Router setup (/, /login, fallback to /)
-- src/index.css → minimal CSS reset (let Chakra handle UI)
-- .env.development / .env.example → VITE_GATEWAY_BASE, VITE_AUTH_REFRESH_PATH
-- .idea/runConfigurations/Vite_Dev_Server.xml → npm run dev with envs
+- src/shared/lib/fetcher.ts        · axios instance (VITE_API_BASE_URL), 401 refresh via VITE_AUTH_REFRESH_PATH, error normalization (toApiError)
+- src/app/providers/QueryProvider  · TanStack Query client provider
+- src/app/providers/ErrorBoundary  · Global error boundary
+- src/app/routes/RouteBoundary     · Per-route ErrorBoundary + Suspense fallback
+- src/features/auth/services/auth.service.ts · Zod schemas + login service
+- src/features/auth/api/hooks.ts   · useLogin, useCurrentUser (JWT-based for now), useLogout
+- src/features/auth/context.ts     · Auth context types (split for HMR rules)
+- src/features/auth/AuthContext.tsx· AuthProvider with in-memory token + refresh scheduling + BroadcastChannel
+- src/features/auth/useAuth.ts     · Hook consumer for AuthContext
+- src/features/auth/components/RequireAuth.tsx · Guard redirects unauth users to /login
+- src/features/misc/pages/{Welcome,Forbidden,NotFound}.tsx
+- src/App.tsx                      · Routes with lazy-loading + per-route boundaries
+- src/shared/ui/{Button,Input,PageSkeleton,ErrorState,EmptyState}.tsx
+- vite.config.ts                   · Alias `@` → `src`, Vitest config
+- eslint.config.js                 · Base config + import/order rule
+- agent.md                         · Engineering guide (source of truth)
 
 Current Behavior
-- Login posts to /auth/api/v1/auth/login. Backend sets httpOnly refresh cookie; frontend stores only the access token (in memory), then redirects to '/'.
-- Axios attaches Bearer access token and attempts refresh on 401 using the refresh endpoint (cookie-based) with withCredentials=true.
-- RBAC not yet enforced in frontend (menu/route gating TBD); roles available in JWT payload.
-- No 403/404 pages yet.
+- Login posts to `/auth/api/v1/auth/login`. Backend sets httpOnly refresh cookie; FE stores only access token in memory and redirects to `/`.
+- Axios attaches Bearer token; on 401 tries refresh via cookie (`/auth/api/v1/auth/refresh`), then retries request; on failure logs out and redirects to `/login`.
+- `useCurrentUser` temporarily decodes JWT payload (roles) until real `/me` is integrated.
+- Routing uses `React.lazy` with route-level Suspense spinners; global ErrorBoundary wraps the tree.
+- Tests: unit (Vitest) and E2E (Playwright) present. CI is intentionally deferred (local-only) per agent.md.
+
+Environment
+- VITE_API_BASE_URL (preferred), VITE_AUTH_REFRESH_PATH. `.env.example` provided.
+- withCredentials enabled in fetcher (disabled under Vitest to avoid CORS noise).
 
 Verification (CORS & Auth)
 - Preflight (dev):
@@ -42,155 +56,83 @@ Verification (CORS & Auth)
 - Refresh (gunakan cookie dari login):
   curl -i -X POST \
     -H "Origin: http://localhost:5173" \
-    --cookie "<REFRESH_COOKIE_NAME>=<value>" \
     http://localhost:8080/auth/api/v1/auth/refresh
 
-ROADMAP (FRONTEND FIRST)
-========================
 
-Phase 1 — Auth Hardening (High Priority)
-1) Move to cookie httpOnly for refresh token
-   - FE keeps access token in memory (not localStorage)
-   - BE sets refresh cookie (httpOnly, Secure in HTTPS, SameSite=Lax/Strict)
-   - FE axios: withCredentials=true; refresh flow uses cookie only
-2) Token refresh strategy
-   - Schedule silent refresh ~60–120s sebelum exp (berdasarkan klaim exp access token)
-   - Tetap handle 401 fallback ke refresh
-3) Multi-tab coordination
-   - BroadcastChannel/storage event untuk sinkronisasi logout/refresh
+ROADMAP (Aligned with agent.md)
+================================
 
-Phase 2 — AuthContext + RBAC Integration
-1) AuthProvider + useAuth()
-   - Menyimpan state: user (optional), roles[], accessToken (memory), isAuthenticated, exp
-   - Decode JWT payload (roles, exp) saat set access token
-2) Helpers RBAC
-   - useHasRole(), HasRole component, route meta { roles: [...] }
-   - Guard route by roles; fallback ke 403
-3) Fallback pages
-   - 403 (Forbidden) dan 404 (Not Found) pages + wiring di Router
+Phase A — Current User (IAM) [Next]
+1) FE: Implement real `useCurrentUser` via IAM `/users/me`.
+   - Service with Zod schema; `useCurrentUser` calls service; invalidate `['currentUser']` on login/logout.
+2) BE (discussion & contract):
+   - Endpoint path: `/iam/api/v1/users/me`.
+   - Response fields: `{ id: string, username: string, email?: string, roles: string[], permissions: string[] }` where permissions are SCOPE_*.
+   - Standardize error shape `{ code?: string, message: string }` across services.
+   - CORS allow-credentials for this route; cookie refresh flow + Bearer access supported.
+   - OpenAPI available via Gateway SpringDoc aggregator.
 
-Phase 3 — Login UX & Validation
-1) react-hook-form + zod
-   - Validasi email/username dan password (required, min-length, pattern opsional)
-   - Tampilkan error dari server secara spesifik
-2) UX
-   - Loading states, submit disabled, focus ring/accessibility
+Phase B — Logout UX
+1) FE: Add logout UI in protected layout; call `/auth/api/v1/auth/logout` if available; clear in-memory token and React Query caches; broadcast logout; redirect to `/login`.
+   - Unit tests for hook and basic render.
 
-Phase 4 — Logout
-1) FE: tombol Logout di layout terlindungi
-   - Clear access token (memory), panggil BE /auth/logout untuk mencabut refresh cookie dan refresh token server-side
-   - Redirect ke /login
-2) Tombol/opsi logout di menu dan auto-logout saat refresh gagal
+Phase C — Home (Catalog List)
+1) Feature `catalog`:
+   - Service + Zod schema for product list (from `catalog` OpenAPI).
+   - API hooks: `useListProducts` (query key `['products', filters]`).
+   - Page: loading skeleton, empty state, error state with retry.
+   - E2E smoke: navigate to home, see list, loading -> data.
 
-Phase 5 — Observability & Testing
-1) E2E: alur login → akses protected route → refresh → logout (happy path & negative)
-2) MSW untuk mock API di dev/test
-3) Unit test guard RBAC (roles), parsing JWT, dan AuthProvider
-4) Opsional: Sentry untuk error jaringan/logik auth (tanpa bocor PII)
+Phase D — Admin: Roles & Permissions CRUD
+1) Under `features/admin`:
+   - Pages for listing and editing roles and permissions (SCOPE_*), tied to IAM.
+   - Services with Zod schemas (read/write), forms with RHF + Zod, API hooks for CRUD.
+   - RBAC guard (RequireRoles/HasRole) to protect access.
+   - Tests: unit for forms & hooks; E2E smoke for happy path.
 
-Phase 6 — Production Readiness & Security Headers
-1) CSP ketat (script-src 'self' + nonce/sha), X-Frame-Options/Frame-ancestors, HSTS, Referrer-Policy, X-Content-Type-Options
-2) Reverse proxy/Ingress routing same-origin (map /auth → gateway) untuk meminimalkan CORS di prod
-3) Validasi env build-time (fail-fast bila env wajib kosong)
+Phase E — Quality & Tests
+- Expand unit tests (guards, services, Zod schemas) and minimal E2E smoke (login success/fail, logout, home view, admin gating).
+- CI: Deferred (local-only). When enabled, pipeline should run `typecheck`, `lint`, `test`, `test:e2e:ci` (smoke), and `build`.
 
 
-FRONTEND TASK DETAILS (IMPLEMENTATION NOTES)
-===========================================
+BACKEND COORDINATION NOTES (IAM & Auth)
+=======================================
 
-Auth State & Storage
-- Simpan access token di memory (AuthContext). Jangan taruh di localStorage/sessionStorage jika memungkinkan.
-- Refresh token tidak diakses FE: dikelola sebagai httpOnly cookie oleh backend.
+Topics to align with backend:
+- Current User endpoint (IAM): `/iam/api/v1/users/me`.
+  - Response: `{ id, username, email?, roles: string[], permissions: string[] }` (SCOPE_* permissions).
+  - Error shape: `{ code?: string, message: string }` unified across services.
+  - Auth: httpOnly refresh cookie; short-lived access token; CORS allow-credentials; specific allowed origins.
+- OpenAPI: Gateway aggregator is available (SpringDoc):
+  - UI aggregator: http://localhost:8080/webjars/swagger-ui/index.html
+  - Switch between groups using `?urls.primaryName=<name>` e.g. `?urls.primaryName=iam`.
+  - Optional FE generation: `openapi-zod-client` or `openapi-typescript` for types/schemas.
 
-Axios
-- http.ts: set withCredentials=true
-- Request interceptor: attach Bearer access token dari memory
-- Response interceptor: pada 401 → panggil refresh (cookie), perbarui access token, retry request; jika gagal → logout total
-
-RBAC via JWT
-- Decode payload JWT (mis. jose.decodeJwt) → roles[]
-- Untuk UI/UX (hide/show menu), gunakan roles dari token
-- Enforcement tetap oleh backend; FE hanya kosmetik & UX
-
-403/404 Pages
-- Tambahkan dua halaman dan wiring di Router; untuk 403 gunakan guard roles di route meta
-
-
-BACKEND AGENT BRIEF (SPRING CLOUD GATEWAY / SPRING SECURITY)
-============================================================
-
-Goal
-- Refresh token via httpOnly cookie ONLY (jangan kembalikan refresh token di body); access token via response body (atau header) untuk FE
-- CORS ketat (origin spesifik, bukan '*') dan allowCredentials=true
-- Endpoint logout untuk mencabut refresh token dan menghapus cookie. Status: TODO (belum tersedia di backend)
-
-Environment Variables (contoh)
-- FRONTEND_ORIGINS = http://localhost:5173,https://staging.example.com,https://app.example.com
-- ACCESS_TOKEN_TTL_SECONDS = 900 (15m)
-- REFRESH_TOKEN_TTL_SECONDS = 2592000 (30d)
-- REFRESH_COOKIE_NAME = refresh_token
-- REFRESH_COOKIE_DOMAIN = localhost (ubah di staging/prod)
-- REFRESH_COOKIE_PATH = / (atau /auth)
-- REFRESH_COOKIE_SAMESITE = Lax (Strict jika tidak butuh cross-site)
-- REFRESH_COOKIE_SECURE = false (true di HTTPS)
-
-CORS (Global)
-- Izinkan Origins berdasarkan FRONTEND_ORIGINS (list spesifik; jangan '*')
-- Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
-- Headers: Content-Type, Authorization
-- allowCredentials: true
-- OPTIONS preflight: balas 204/200 dengan header CORS yang sesuai + 'Vary: Origin'
-- Sertakan 'Access-Control-Allow-Origin: <origin>' & 'Vary: Origin' juga pada response POST/GET
-
-Login Flow
-1) Validasi kredensial → issue access token (JWT, exp pendek) + refresh token (opaque/JWT terpisah, rotasi)
-2) Set refresh token di cookie httpOnly:
-   - Set-Cookie: REFRESH_COOKIE_NAME=<value>; HttpOnly; Path=/; SameSite=Lax; Secure(HTTPS only); Max-Age=<ttl>
-3) Body response: { tokenType: "Bearer", accessToken: "...", expiresIn: <sec> }
-
-Refresh Flow (POST /auth/api/v1/auth/refresh)
-1) Baca refresh token dari cookie httpOnly
-2) Validasi + rotasi (revoke old, issue new refresh & access)
-3) Set-cookie refresh baru (httpOnly) dan kembalikan HANYA access token baru di body (jangan kembalikan refresh token di body)
-
-Logout Flow (POST /auth/api/v1/auth/logout)
-Status: TODO (belum diimplementasikan di backend)
-1) Baca refresh token dari cookie, revoke di store (DB/Redis) berdasarkan jti/id
-2) Clear cookie: Set-Cookie: REFRESH_COOKIE_NAME=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure(HTTPS only)
-3) 204 No Content
-
-Security Notes
-- Simpan refresh token dalam DB (hash) dengan rotasi (rolling) untuk membatasi replay
-- Pastikan akses token berumur pendek; roles ada di klaim
-- Jangan pernah gunakan origin '*' jika allowCredentials=true
-- Jangan kirimkan refresh token di body (gunakan cookie httpOnly saja)
-
-Spring (contoh konfigurasi ringkas)
-- CORS: WebMvcConfigurer / CorsConfigurationSource dengan allowedOrigins dari FRONTEND_ORIGINS (split comma)
-- Cookie: gunakan ResponseCookie.from(REFRESH_COOKIE_NAME, token).httpOnly(true).path("/").sameSite("Lax").secure(secure).maxAge(...).build()
-- Set-Cookie di header response untuk login/refresh/logout
-- Gateway: jika perlu, tambahkan global CORS untuk route /auth/**
-
-Acceptance Criteria
-- FE dapat login → cookie refresh terpasang, access token dikembalikan
-- FE dapat refresh tanpa akses ke cookie (httpOnly) dan mendapatkan access token baru di body; refresh cookie di-rotate; refresh token tidak dikembalikan di body
-- FE dapat logout → cookie terhapus, refresh dicabut, akses ke route protected gagal
-- CORS berfungsi untuk origin spesifik (dev/staging/prod), bukan '*', dan allowCredentials=true
+Acceptance Criteria (Phase A)
+- FE calls IAM `/users/me` with Bearer/cookie and parses response via Zod.
+- `useCurrentUser` returns `{ id, username, roles, permissions }` and caches per session.
+- Login invalidates and refetches current user; logout clears and redirects.
+- Error states display normalized messages via `toApiError`.
 
 
-CHECKLIST QUICK START (After Backend Cookie Migration)
-=====================================================
+CHECKLIST QUICK START (Local)
+=============================
 
 Frontend
-- [ ] Tambah AuthContext (in-memory access token, roles)
-- [ ] axios withCredentials=true; refresh via cookie route
-- [ ] Jadwal silent refresh sebelum exp
-- [ ] Multi-tab sync (BroadcastChannel)
-- [ ] RBAC guards + 403/404 pages
-- [ ] Logout flow FE (panggil /auth/logout + bersihkan state)
+- [x] In-memory access token via AuthContext; cookie refresh interceptor.
+- [x] React Query provider and route-level Suspense/Error boundaries.
+- [x] Chakra UI as single styling system.
+- [x] RHF + Zod for forms; Login refactored.
+- [x] ESLint + Prettier + Husky & lint-staged.
+- [x] Unit tests (Vitest); E2E (Playwright in `e2e/`).
+- [ ] Real `useCurrentUser` (IAM `/users/me`) with Zod schema.
+- [ ] Logout UI flow and tests.
+- [ ] Catalog list page with loading/empty/error states and tests.
+- [ ] Admin roles/permissions CRUD with RBAC guards and tests.
 
 Backend
-- [ ] Login: set-cookie refresh httpOnly + access token di body
-- [ ] Refresh: baca cookie, rotasi refresh, set-cookie baru, kirim access token
-- [ ] Logout: revoke refresh, clear cookie
-- [ ] CORS: origins spesifik, allowCredentials=true, OPTIONS preflight OK
+- [ ] Confirm IAM `/users/me` payload (id, username, email?, roles[], permissions[]/SCOPE_*).
+- [ ] Standardize error shape `{ code, message }`.
+- [ ] Ensure CORS allow-credentials and cookie refresh flow.
+- [ ] Provide OpenAPI for IAM and Catalog endpoints (already available via SpringDoc aggregator).
 

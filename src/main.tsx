@@ -1,13 +1,21 @@
+import { ChakraProvider } from '@chakra-ui/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+
+import ErrorBoundary from '@/app/providers/ErrorBoundary'
+import AppQueryProvider from '@/app/providers/QueryProvider'
+
 import './index.css'
 import App from './App.tsx'
-import { ChakraProvider } from '@chakra-ui/react'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ChakraProvider>
-      <App />
+      <AppQueryProvider>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </AppQueryProvider>
     </ChakraProvider>
   </StrictMode>,
 )

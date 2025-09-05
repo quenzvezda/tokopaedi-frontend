@@ -12,12 +12,12 @@ test.describe('RBAC guard', () => {
     const fakeJwt = `${header}.${payload}.`
 
     await page.evaluate((token) => {
-      // @ts-ignore dev hook from AuthProvider in dev
+      // @ts-expect-error dev helper from AuthProvider in dev
       window.__setAccessToken?.(token)
     }, fakeJwt)
 
     // Wait until token registered in context
-    await page.waitForFunction(() => (window as any).__hasToken === true)
+    await page.waitForFunction(() => (window as unknown as { __hasToken?: boolean }).__hasToken === true)
 
     // Client-side navigate to /admin (avoid full reload)
     await page.evaluate(() => {
@@ -29,4 +29,3 @@ test.describe('RBAC guard', () => {
     await expect(page.getByRole('heading', { name: /403 - Forbidden/i })).toBeVisible()
   })
 })
-

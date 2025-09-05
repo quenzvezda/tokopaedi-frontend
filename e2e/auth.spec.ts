@@ -17,12 +17,12 @@ test.describe('Auth guard', () => {
     const fakeJwt = `${header}.${payload}.` // signature ignored by FE
 
     await page.evaluate((token) => {
-      // @ts-ignore
+      // @ts-expect-error dev helper available only in dev
       window.__setAccessToken?.(token)
     }, fakeJwt)
 
     // wait until auth context reflects token
-    await page.waitForFunction(() => (window as any).__hasToken === true)
+    await page.waitForFunction(() => (window as unknown as { __hasToken?: boolean }).__hasToken === true)
 
     await page.evaluate(() => {
       history.pushState({}, '', '/')

@@ -27,7 +27,7 @@ export function decodeJwtExp(token: string): number | null {
   }
 }
 
-export function decodeJwtPayload<T = any>(token: string): T | null {
+export function decodeJwtPayload<T = Record<string, unknown>>(token: string): T | null {
   try {
     const parts = token.split('.')
     if (parts.length < 2) return null
@@ -37,9 +37,10 @@ export function decodeJwtPayload<T = any>(token: string): T | null {
   }
 }
 
-export function extractRoles(payload: any): string[] {
+export function extractRoles(payload: Record<string, unknown> | null): string[] {
   if (!payload) return []
-  const r = payload.roles ?? payload.authorities ?? payload.scope ?? []
+  const rp = payload as Record<string, unknown>
+  const r = (rp.roles as unknown) ?? (rp.authorities as unknown) ?? (rp.scope as unknown) ?? []
   if (Array.isArray(r)) return r.map(String)
   if (typeof r === 'string') return r.split(/\s+/g).filter(Boolean)
   return []

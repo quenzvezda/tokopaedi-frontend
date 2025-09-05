@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import {
   Box,
   Button,
   Container,
   Flex,
   FormControl,
+  FormErrorMessage,
   FormLabel,
   Heading,
   Input,
@@ -15,39 +15,50 @@ import {
   useColorModeValue,
   useToast,
 } from '@chakra-ui/react'
-import { login } from '../api'
-import { useAuth } from '../AuthContext'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { z } from 'zod'
+
+import { toApiError } from '@/shared/lib/fetcher'
+
+import { useLogin } from '../api/hooks'
+
+
+const LoginSchema = z.object({
+  usernameOrEmail: z.string().min(1, 'Username or Email is required'),
+  password: z.string().min(1, 'Password is required'),
+})
+
+type LoginFormValues = z.infer<typeof LoginSchema>
 
 export default function Login() {
-  const [usernameOrEmail, setUsernameOrEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
-  const location = useLocation() as any
+  const location = useLocation() as { state?: { from?: { pathname?: string } } }
   const from = location.state?.from?.pathname || '/'
-  const { setAccessToken } = useAuth()
+  const { isPending, mutateAsync } = useLogin()
 
   const cardBg = useColorModeValue('white', 'gray.800')
   const border = useColorModeValue('gray.200', 'gray.700')
   const muted = useColorModeValue('gray.600', 'gray.400')
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setIsSubmitting(true)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({ resolver: zodResolver(LoginSchema), defaultValues: { usernameOrEmail: '', password: '' } })
+
+  const onSubmit = async (values: LoginFormValues) => {
     try {
-      const data = await login({ usernameOrEmail, password })
-      const token = (data as any).accessToken
-      if (token) setAccessToken(token)
+      await mutateAsync(values)
       toast({ title: 'Signed in', status: 'success' })
       navigate(from, { replace: true })
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Invalid credentials'
+    } catch (err: unknown) {
+      const { message } = toApiError(err)
       toast({ title: 'Login failed', description: message, status: 'error' })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -62,7 +73,7 @@ export default function Login() {
 
           <Box
             as="form"
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmit)}
             bg={cardBg}
             borderWidth="1px"
             borderColor={border}
@@ -71,24 +82,25 @@ export default function Login() {
             boxShadow={{ base: 'sm', md: 'md' }}
           >
             <Stack spacing={4}>
-              <FormControl id="usernameOrEmail" isRequired>
+              <FormControl id="usernameOrEmail" isRequired isInvalid={!!errors.usernameOrEmail}>
                 <FormLabel>Username or Email</FormLabel>
                 <Input
-                  value={usernameOrEmail}
-                  onChange={(e) => setUsernameOrEmail(e.target.value)}
+                  {...register('usernameOrEmail')}
                   placeholder="admin@local.test"
                   autoComplete="username"
                 />
+                {errors.usernameOrEmail && (
+                  <FormErrorMessage>{errors.usernameOrEmail.message}</FormErrorMessage>
+                )}
               </FormControl>
 
-              <FormControl id="password" isRequired>
+              <FormControl id="password" isRequired isInvalid={!!errors.password}>
                 <FormLabel>Password</FormLabel>
                 <InputGroup>
                   <Input
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    {...register('password')}
+                    placeholder="********"
                     autoComplete="current-password"
                   />
                   <InputRightElement width="4.5rem">
@@ -101,9 +113,10 @@ export default function Login() {
                     </Button>
                   </InputRightElement>
                 </InputGroup>
+                {errors.password && <FormErrorMessage>{errors.password.message}</FormErrorMessage>}
               </FormControl>
 
-              <Button colorScheme="blue" type="submit" isLoading={isSubmitting}>
+              <Button colorScheme="blue" type="submit" isLoading={isPending}>
                 Sign in
               </Button>
             </Stack>
