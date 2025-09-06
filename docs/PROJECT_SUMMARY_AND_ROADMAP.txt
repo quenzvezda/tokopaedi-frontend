@@ -73,7 +73,8 @@ Phase A - Current User (IAM) [Done]
    - Service with Zod schema; `useCurrentUser` calls service; invalidate `['currentUser']` on login/logout.
 2) BE (discussion & contract):
    - Endpoint path: `/iam/api/v1/users/me`.
-   - Response fields: `{ id: string, username: string, email?: string, roles: string[], permissions: string[] }` where permissions are SCOPE_*.
+   - Response fields: `{ id: string, username: string, email?: string, roles: string[], permissions: string[] }`.
+   - Permission naming: `<service>:<subject>:<action>` (lowercase, colon-delimited), e.g. `catalog:product:create`, `auth:account:delete`.
    - Standardize error shape `{ code?: string, message: string }` across services.
    - CORS allow-credentials for this route; cookie refresh flow + Bearer access supported.
    - OpenAPI available via Gateway SpringDoc aggregator.
@@ -98,11 +99,11 @@ Phase F - OpenAPI Generation [Next]
    - [ ] Refactor catalog service to use generated types/schemas.
    - [ ] (Optional) Refactor IAM DTOs to generated types where appropriate.
 
-Phase D — Admin: Roles & Permissions CRUD
+Phase D - Admin: Roles & Permissions CRUD
 1) Under `features/admin`:
-   - Pages for listing and editing roles and permissions (SCOPE_*), tied to IAM.
+   - Pages for listing and editing roles and permissions (permission strings in `<service>:<subject>:<action>`), tied to IAM.
    - Services with Zod schemas (read/write), forms with RHF + Zod, API hooks for CRUD.
-   - RBAC guard (RequireRoles/HasRole) to protect access.
+   - RBAC guard (RequireRoles/HasRole) and permission guard (RequirePermissions/HasPermission) to protect access.
    - Tests: unit for forms & hooks; E2E smoke for happy path.
 
 Phase E — Quality & Tests
@@ -167,7 +168,7 @@ Frontend
 - [ ] Admin roles/permissions CRUD with RBAC guards and tests.
 
 Backend
-- [x] Confirm IAM `/users/me` payload (id, username, email?, roles[], permissions[]/SCOPE_*).
+- [x] Confirm IAM `/users/me` payload (id, username, email?, roles[], permissions[] following `<service>:<subject>:<action>`).
 - [x] Standardize error shape `{ code, message }`.
 - [x] Ensure CORS allow-credentials and cookie refresh flow.
 - [x] Provide OpenAPI for IAM and Catalog endpoints (already available via SpringDoc aggregator).

@@ -56,7 +56,7 @@ describe('useCurrentUser', () => {
       id: 'u-1',
       username: 'alice',
       roles: ['USER'],
-      permissions: ['SCOPE_product:read'],
+      permissions: ['catalog:product:read'],
     }
     const mod = (await import('@/shared/lib/fetcher')) as unknown as {
       _get: ReturnType<typeof vi.fn>
@@ -72,7 +72,7 @@ describe('useCurrentUser', () => {
 
   it('invalidates and refetches on login()', async () => {
     const first = { id: 'u-1', username: 'alice', roles: ['USER'], permissions: [] as string[] }
-    const second = { id: 'u-1', username: 'alice', roles: ['ADMIN'], permissions: ['SCOPE_admin'] }
+    const second = { id: 'u-1', username: 'alice', roles: ['ADMIN'], permissions: ['auth:admin:read'] }
 
     const mod = (await import('@/shared/lib/fetcher')) as unknown as {
       _get: ReturnType<typeof vi.fn>

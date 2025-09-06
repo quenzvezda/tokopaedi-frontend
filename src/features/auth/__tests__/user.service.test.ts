@@ -24,7 +24,7 @@ beforeEach(async () => {
       username: 'alice',
       email: 'alice@example.com',
       roles: ['USER', 'ADMIN'],
-      permissions: ['SCOPE_product:read'],
+      permissions: ['catalog:product:read'],
     }
     const mod = (await import('@/shared/lib/fetcher')) as unknown as { _get: ReturnType<typeof vi.fn> }
     mod._get.mockResolvedValueOnce({ data })
