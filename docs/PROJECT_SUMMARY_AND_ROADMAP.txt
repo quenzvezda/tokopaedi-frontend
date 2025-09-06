@@ -161,7 +161,7 @@ Frontend
 - [x] Real `useCurrentUser` (IAM `/users/me`) with Zod schema.
 - [x] Logout UI flow and tests.
 - [x] Catalog list page with loading/empty/error states (public `/`).
-- [x] Register page (UI placeholder; backend integration TBD).
+- [x] Register page (integrated with backend; navigates to login on success).
 - [ ] OpenAPI generator scripts (iam, catalog, all).
 - [ ] Refactor catalog service to use generated types/schemas.
 - [ ] Admin roles/permissions CRUD with RBAC guards and tests.
