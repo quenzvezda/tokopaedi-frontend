@@ -9,7 +9,8 @@ import RequireAuth from './features/auth/components/RequireAuth'
 import { RequireRoles } from './features/auth/rbac'
 
 const Login = lazy(() => import('./features/auth/pages/Login'))
-const Welcome = lazy(() => import('./features/misc/pages/Welcome'))
+const Register = lazy(() => import('./features/auth/pages/Register'))
+const CatalogList = lazy(() => import('./features/catalog/pages/CatalogList'))
 const Forbidden = lazy(() => import('./features/misc/pages/Forbidden'))
 const NotFound = lazy(() => import('./features/misc/pages/NotFound'))
 const Admin = lazy(() => import('./features/admin/pages/Admin'))
@@ -27,16 +28,8 @@ function App() {
         >
           <Routes>
           <Route path="/login" element={<RouteBoundary><Login /></RouteBoundary>} />
-          <Route
-            path="/"
-            element={
-              <RequireAuth>
-                <RouteBoundary>
-                  <Welcome />
-                </RouteBoundary>
-              </RequireAuth>
-            }
-          />
+          <Route path="/register" element={<RouteBoundary><Register /></RouteBoundary>} />
+          <Route path="/" element={<RouteBoundary><CatalogList /></RouteBoundary>} />
           <Route
             path="/admin"
             element={

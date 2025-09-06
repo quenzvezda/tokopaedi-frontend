@@ -1,8 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 
-import { decodeJwtPayload } from '@/lib/jwt'
-
-import { loginService, type LoginRequestDto } from '../services/auth.service'
+import {
+  loginService,
+  type LoginRequestDto,
+  registerService,
+  type RegisterRequestDto,
+} from '../services/auth.service'
+import { getCurrentUserService, type CurrentUserDto } from '../services/user.service'
 import { useAuth } from '../useAuth'
 
 export function useLogin() {
@@ -18,38 +23,32 @@ export function useLogin() {
   })
 }
 
-export type CurrentUser = {
-  sub?: string
-  roles: string[]
-}
+export type CurrentUser = Pick<CurrentUserDto, 'id' | 'username' | 'email' | 'roles' | 'permissions'>
 
-// Minimal user from JWT payload to satisfy guard and UI needs
 export function useCurrentUser() {
   const { accessToken } = useAuth()
   return useQuery<CurrentUser>({
     queryKey: ['currentUser'],
     enabled: !!accessToken,
     queryFn: async () => {
-      if (!accessToken) return { roles: [] }
-      const payload = decodeJwtPayload<Record<string, unknown>>(accessToken)
-      const rolesRaw = (payload?.roles || payload?.authorities || payload?.scope) as
-        | string[]
-        | string
-        | undefined
-      const roles = Array.isArray(rolesRaw)
-        ? rolesRaw.map(String)
-        : typeof rolesRaw === 'string'
-          ? rolesRaw.split(/\s+/g)
-          : []
-      return { sub: (payload?.sub as string | undefined) ?? undefined, roles }
+      const data = await getCurrentUserService()
+      return {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        roles: data.roles || [],
+        permissions: data.permissions || [],
+      }
     },
-    staleTime: 0,
+    // cache for the session; invalidated on login/logout
+    staleTime: 5 * 60 * 1000,
   })
 }
 
 export function useLogout() {
   const { logoutLocal } = useAuth()
   const qc = useQueryClient()
+  const navigate = useNavigate()
   return useMutation({
     mutationFn: async () => {
       try {
@@ -63,6 +62,18 @@ export function useLogout() {
     onSettled: () => {
       logoutLocal()
       qc.removeQueries()
+      navigate('/login', { replace: true })
+    },
+  })
+}
+
+export function useRegister() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: RegisterRequestDto) => registerService(input),
+    onSuccess: () => {
+      // No token expected from register; just ensure user cache is clean
+      qc.removeQueries({ queryKey: ['currentUser'] })
     },
   })
 }

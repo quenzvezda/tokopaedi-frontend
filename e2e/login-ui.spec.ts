@@ -14,6 +14,7 @@ test.describe('Login UI (real backend)', () => {
     await page.getByRole('button', { name: 'Sign in' }).click()
 
     await expect(page).toHaveURL('/')
-    await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible()
+    // Home now shows the Catalog list
+    await expect(page.getByRole('heading', { name: 'Products' })).toBeVisible()
   })
 })

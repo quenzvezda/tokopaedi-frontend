@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test'
 
 test.describe('RBAC guard', () => {
   test('redirects to /403 when non-admin visits /admin', async ({ page }) => {
+    await page.route('**/iam/api/v1/users/me', (r) =>
+      r.fulfill({ status: 200, headers: { 'content-type': 'application/json' }, json: { id: 'e2e', username: 'e2e', roles: ['USER'], permissions: [] } }),
+    )
     await page.goto('/login')
 
     // Fake JWT: roles = ['USER'] (no ADMIN), exp 1h ahead

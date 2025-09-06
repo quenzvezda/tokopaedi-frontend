@@ -10,6 +10,7 @@ import {
   Input,
   InputGroup,
   InputRightElement,
+  Link,
   Stack,
   Text,
   useColorModeValue,
@@ -18,7 +19,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom'
 import { z } from 'zod'
 
 import { toApiError } from '@/shared/lib/fetcher'
@@ -121,6 +122,12 @@ export default function Login() {
               </Button>
             </Stack>
           </Box>
+          <Text fontSize="sm" color={muted} textAlign="center">
+            Don't have an account?{' '}
+            <Link as={RouterLink} to="/register" color="teal.500">
+              Register
+            </Link>
+          </Text>
         </Stack>
       </Container>
     </Flex>

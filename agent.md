@@ -362,3 +362,31 @@ Cara pakai singkat:
 - Sertakan checklist Acceptance Criteria terkait fitur.
 - Tunjukkan perubahan pada `services`/`api` ketimbang langsung ke komponen.
 - Hindari perubahan global yang tidak perlu pada PR fitur.
+
+---
+
+## 18) OpenAPI Docs & Generation
+
+**Do**
+
+- Gunakan OpenAPI JSON dari Gateway aggregator untuk tipe/skema otomatis.
+- Prefer `openapi-zod-client` (Zod + TS) atau `openapi-typescript` (TS only).
+- Simpan hasil generate di folder khusus (mis. `src/generated/openapi/<group>`), jangan modifikasi manual.
+- Tambahkan skrip npm untuk generate: `gen:openapi:iam`, `gen:openapi:catalog`, `gen:openapi:all`.
+
+**Info (Dev / Lokal)**
+
+- JSON endpoints tersedia via Gateway:
+  - `http://localhost:8080/iam/v3/api-docs`
+  - `http://localhost:8080/catalog/v3/api-docs`
+- Swagger UI aggregator: `http://localhost:8080/webjars/swagger-ui/index.html?urls.primaryName=iam`
+
+**Don't**
+
+- Jangan mengandalkan parsing HTML Swagger UI untuk otomatisasi; gunakan JSON langsung.
+
+**Acceptance Criteria**
+
+- [ ] (TODO) Skrip generator OpenAPI ditambahkan (iam, catalog, all).
+- [ ] (TODO) Refactor `features/catalog/services` memakai tipe/skema hasil generate.
+- [ ] (Optional) Tambahkan README singkat cara pakai generator.

@@ -28,13 +28,19 @@ Key Files
 - vite.config.ts                   · Alias `@` → `src`, Vitest config
 - eslint.config.js                 · Base config + import/order rule
 - agent.md                         · Engineering guide (source of truth)
+ - OpenAPI JSON (Gateway):
+   - http://localhost:8080/iam/v3/api-docs
+   - http://localhost:8080/catalog/v3/api-docs
+   - Swagger UI: http://localhost:8080/webjars/swagger-ui/index.html
 
 Current Behavior
 - Login posts to `/auth/api/v1/auth/login`. Backend sets httpOnly refresh cookie; FE stores only access token in memory and redirects to `/`.
 - Axios attaches Bearer token; on 401 tries refresh via cookie (`/auth/api/v1/auth/refresh`), then retries request; on failure logs out and redirects to `/login`.
-- `useCurrentUser` temporarily decodes JWT payload (roles) until real `/me` is integrated.
+- `useCurrentUser` calls IAM `/iam/api/v1/users/me` and returns `{ id, username, email?, roles, permissions }`.
 - Routing uses `React.lazy` with route-level Suspense spinners; global ErrorBoundary wraps the tree.
+- Home `/` is public (catalog list). `/admin` remains protected (ADMIN).
 - Tests: unit (Vitest) and E2E (Playwright) present. CI is intentionally deferred (local-only) per agent.md.
+ - OpenAPI JSON endpoints are reachable via Gateway aggregator (see Key Files).
 
 Environment
 - VITE_API_BASE_URL (preferred), VITE_AUTH_REFRESH_PATH. `.env.example` provided.
@@ -62,7 +68,7 @@ Verification (CORS & Auth)
 ROADMAP (Aligned with agent.md)
 ================================
 
-Phase A — Current User (IAM) [Next]
+Phase A - Current User (IAM) [Done]
 1) FE: Implement real `useCurrentUser` via IAM `/users/me`.
    - Service with Zod schema; `useCurrentUser` calls service; invalidate `['currentUser']` on login/logout.
 2) BE (discussion & contract):
@@ -76,12 +82,21 @@ Phase B — Logout UX
 1) FE: Add logout UI in protected layout; call `/auth/api/v1/auth/logout` if available; clear in-memory token and React Query caches; broadcast logout; redirect to `/login`.
    - Unit tests for hook and basic render.
 
-Phase C — Home (Catalog List)
+Phase C - Home (Catalog List) [In Progress]
 1) Feature `catalog`:
-   - Service + Zod schema for product list (from `catalog` OpenAPI).
-   - API hooks: `useListProducts` (query key `['products', filters]`).
-   - Page: loading skeleton, empty state, error state with retry.
-   - E2E smoke: navigate to home, see list, loading -> data.
+   - [x] Service + Zod schema for product list (pagination normalized: Spring Page or generic).
+   - [x] API hooks: `useListProducts` (query key `['products', filters]`).
+   - [x] Page: public `/` with header/footer, loading skeleton, empty state, error state with retry.
+   - [ ] Product card fields: price (awaiting backend), brand, image/media (future) — placeholder image used for now.
+   - [ ] E2E smoke with real backend once catalog stabilized (add later).
+
+Phase F - OpenAPI Generation [Next]
+1) Generators
+   - [ ] Add generator scripts: `gen:openapi:iam`, `gen:openapi:catalog`, `gen:openapi:all`.
+   - [ ] Choose tool: `openapi-zod-client` (preferred) or `openapi-typescript`.
+2) Refactors
+   - [ ] Refactor catalog service to use generated types/schemas.
+   - [ ] (Optional) Refactor IAM DTOs to generated types where appropriate.
 
 Phase D — Admin: Roles & Permissions CRUD
 1) Under `features/admin`:
@@ -108,6 +123,24 @@ Topics to align with backend:
   - Switch between groups using `?urls.primaryName=<name>` e.g. `?urls.primaryName=iam`.
   - Optional FE generation: `openapi-zod-client` or `openapi-typescript` for types/schemas.
 
+Register API (TBD)
+- Endpoint path and payload to be confirmed with backend (e.g., `/auth/api/v1/auth/register`).
+- Tentative FE form fields: `{ username: string, email: string, password: string }`.
+- FE will add `registerService` with Zod schema and a mutation hook once the contract is finalized.
+
+Catalog Contract (FE Expectations)
+- List endpoint: `/catalog/api/v1/products?q={q}&brandId={brandId}&categoryId={categoryId}&page={page}&size={size}`.
+- Response supported shapes:
+  - Spring Page: `{ content: Product[], number, size, totalElements, totalPages }`
+  - Generic: `{ items: Product[], page, size, total, totalPages }`
+  - Array fallback: `Product[]`
+- Product DTO (minimum fields for FE):
+  - `id: string`, `name: string`
+  - `description?: string`
+  - `price?: number | string` (temporary — BE to standardize to number)
+  - `brandName?: string`, `categoryName?: string`
+  - `images?: string[]` (future) — FE currently uses placeholder image until provided
+
 Acceptance Criteria (Phase A)
 - FE calls IAM `/users/me` with Bearer/cookie and parses response via Zod.
 - `useCurrentUser` returns `{ id, username, roles, permissions }` and caches per session.
@@ -125,14 +158,16 @@ Frontend
 - [x] RHF + Zod for forms; Login refactored.
 - [x] ESLint + Prettier + Husky & lint-staged.
 - [x] Unit tests (Vitest); E2E (Playwright in `e2e/`).
-- [ ] Real `useCurrentUser` (IAM `/users/me`) with Zod schema.
-- [ ] Logout UI flow and tests.
-- [ ] Catalog list page with loading/empty/error states and tests.
+- [x] Real `useCurrentUser` (IAM `/users/me`) with Zod schema.
+- [x] Logout UI flow and tests.
+- [x] Catalog list page with loading/empty/error states (public `/`).
+- [x] Register page (UI placeholder; backend integration TBD).
+- [ ] OpenAPI generator scripts (iam, catalog, all).
+- [ ] Refactor catalog service to use generated types/schemas.
 - [ ] Admin roles/permissions CRUD with RBAC guards and tests.
 
 Backend
-- [ ] Confirm IAM `/users/me` payload (id, username, email?, roles[], permissions[]/SCOPE_*).
-- [ ] Standardize error shape `{ code, message }`.
-- [ ] Ensure CORS allow-credentials and cookie refresh flow.
-- [ ] Provide OpenAPI for IAM and Catalog endpoints (already available via SpringDoc aggregator).
-
+- [x] Confirm IAM `/users/me` payload (id, username, email?, roles[], permissions[]/SCOPE_*).
+- [x] Standardize error shape `{ code, message }`.
+- [x] Ensure CORS allow-credentials and cookie refresh flow.
+- [x] Provide OpenAPI for IAM and Catalog endpoints (already available via SpringDoc aggregator).
