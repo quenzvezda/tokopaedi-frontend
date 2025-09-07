@@ -1,0 +1,402 @@
+openapi: 3.0.3
+info:
+  title: Tokopaedi Catalog API (Client Contract)
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /catalog/api/v1/brands:
+    get:
+      tags: [Brand]
+      operationId: listBrands
+      summary: List brands
+      parameters:
+        - in: query
+          name: active
+          required: false
+          schema: { type: boolean }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Brand' } } } } }
+    post:
+      tags: [Brand]
+      operationId: createBrand
+      summary: Create brand
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:brand:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BrandCreateRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Brand' } } } }
+  /catalog/api/v1/brands/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [Brand]
+      operationId: updateBrand
+      summary: Update brand
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:brand:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BrandUpdateRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Brand' } } } }
+    delete:
+      tags: [Brand]
+      operationId: deleteBrand
+      summary: Delete brand
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:brand:write"
+      security:
+        - cookieAuth: []
+      responses:
+        '204': { description: No Content }
+
+  /catalog/api/v1/categories:
+    get:
+      tags: [Category]
+      operationId: listCategories
+      summary: List categories
+      parameters:
+        - in: query
+          name: active
+          schema: { type: boolean }
+        - in: query
+          name: parentId
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Category' } } } } }
+    post:
+      tags: [Category]
+      operationId: createCategory
+      summary: Create category
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:category:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryCreateRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+  /catalog/api/v1/categories/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [Category]
+      operationId: updateCategory
+      summary: Update category
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:category:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryUpdateRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+    delete:
+      tags: [Category]
+      operationId: deleteCategory
+      summary: Delete category
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:category:write"
+      security:
+        - cookieAuth: []
+      responses:
+        '204': { description: No Content }
+
+  /catalog/api/v1/products:
+    get:
+      tags: [Product]
+      operationId: listProducts
+      summary: List products
+      description: Returns paginated list of products with optional filters.
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Free-text search query
+        - in: query
+          name: brandId
+          schema: { type: string, format: uuid }
+          description: Filter by brand id
+        - in: query
+          name: categoryId
+          schema: { type: string, format: uuid }
+          description: Filter by category id
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 0, default: 0 }
+          description: Zero-based page index
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+          description: Page size
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPage'
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '500': { description: Internal Server Error, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+    post:
+      tags: [Product]
+      operationId: createProduct
+      summary: Create product
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:product:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductCreateRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ProductDetail' } } } }
+
+  /catalog/api/v1/products/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [Product]
+      operationId: updateProduct
+      summary: Update product
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:product:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductUpdateRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ProductDetail' } } } }
+    delete:
+      tags: [Product]
+      operationId: deleteProduct
+      summary: Delete product
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:product:write"
+      security:
+        - cookieAuth: []
+      responses:
+        '204': { description: No Content }
+
+  /catalog/api/v1/products/{slug}:
+    parameters:
+      - in: path
+        name: slug
+        required: true
+        schema: { type: string }
+    get:
+      tags: [Product]
+      operationId: getProductDetail
+      summary: Get product detail
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ProductDetail' } } } }
+
+  /catalog/api/v1/products/{productId}/skus:
+    parameters:
+      - in: path
+        name: productId
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Sku]
+      operationId: createSku
+      summary: Create SKU
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:sku:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SkuCreateRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Sku' } } } }
+
+  /catalog/api/v1/skus/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [Sku]
+      operationId: updateSku
+      summary: Update SKU
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:sku:write"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SkuUpdateRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Sku' } } } }
+    delete:
+      tags: [Sku]
+      operationId: deleteSku
+      summary: Delete SKU
+      description: "Requires roles: ADMIN or CATALOG_EDITOR, or scope: catalog:sku:write"
+      security:
+        - cookieAuth: []
+      responses:
+        '204': { description: No Content }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+  schemas:
+    Brand:
+      type: object
+      properties:
+        id: { type: string, format: uuid, nullable: true }
+        name: { type: string }
+        active: { type: boolean }
+      required: [name, active]
+    BrandCreateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        active: { type: boolean, nullable: true }
+      required: [name]
+    BrandUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        active: { type: boolean, nullable: true }
+      required: [name]
+
+    Category:
+      type: object
+      properties:
+        id: { type: string, format: uuid, nullable: true }
+        parentId: { type: string, format: uuid, nullable: true }
+        name: { type: string }
+        active: { type: boolean }
+        sortOrder: { type: integer, nullable: true }
+      required: [name, active]
+    CategoryCreateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        parentId: { type: string, format: uuid, nullable: true }
+        active: { type: boolean, nullable: true }
+        sortOrder: { type: integer, nullable: true }
+      required: [name]
+    CategoryUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        parentId: { type: string, format: uuid, nullable: true }
+        active: { type: boolean, nullable: true }
+        sortOrder: { type: integer, nullable: true }
+      required: [name]
+
+    ApiError:
+      type: object
+      properties:
+        code: { type: string, nullable: true }
+        message: { type: string }
+      required: [message]
+    Product:
+      type: object
+      description: Minimal shape required by the UI for listing
+      properties:
+        id: { type: string, description: Product identifier (stringified) }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        price: { type: number, format: float, nullable: true, description: Optional in v1; may become required in a future version }
+        brandName: { type: string, nullable: true }
+        categoryName: { type: string, nullable: true }
+      required: [id, name]
+    ProductPage:
+      type: object
+      description: Spring-style paginated response
+      properties:
+        content: { type: array, items: { $ref: '#/components/schemas/Product' } }
+        number: { type: integer, description: Zero-based page index }
+        size: { type: integer }
+        totalElements: { type: integer }
+        totalPages: { type: integer }
+      required: [content]
+
+    ProductCreateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        shortDesc: { type: string, nullable: true }
+        brandId: { type: string, format: uuid }
+        categoryId: { type: string, format: uuid }
+        published: { type: boolean, nullable: true }
+      required: [name, brandId, categoryId]
+    ProductUpdateRequest:
+      type: object
+      properties:
+        name: { type: string, nullable: true }
+        shortDesc: { type: string, nullable: true }
+        brandId: { type: string, format: uuid, nullable: true }
+        categoryId: { type: string, format: uuid, nullable: true }
+        published: { type: boolean, nullable: true }
+    ProductDetail:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        shortDesc: { type: string, nullable: true }
+        brandId: { type: string, format: uuid }
+        categoryId: { type: string, format: uuid }
+        published: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time, nullable: true }
+      required: [id, name, slug, brandId, categoryId, published, createdAt]
+
+    SkuCreateRequest:
+      type: object
+      properties:
+        productId: { type: string, format: uuid }
+        skuCode: { type: string }
+        active: { type: boolean, nullable: true }
+        barcode: { type: string, nullable: true }
+      required: [productId, skuCode]
+    SkuUpdateRequest:
+      type: object
+      properties:
+        skuCode: { type: string, nullable: true }
+        active: { type: boolean, nullable: true }
+        barcode: { type: string, nullable: true }
+    Sku:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        skuCode: { type: string }
+        active: { type: boolean }
+        barcode: { type: string, nullable: true }
+      required: [id, productId, skuCode, active]

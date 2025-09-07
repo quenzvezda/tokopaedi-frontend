@@ -72,7 +72,12 @@ describe('useCurrentUser', () => {
 
   it('invalidates and refetches on login()', async () => {
     const first = { id: 'u-1', username: 'alice', roles: ['USER'], permissions: [] as string[] }
-    const second = { id: 'u-1', username: 'alice', roles: ['ADMIN'], permissions: ['auth:admin:read'] }
+    const second = {
+      id: 'u-1',
+      username: 'alice',
+      roles: ['ADMIN'],
+      permissions: ['auth:admin:read'],
+    }
 
     const mod = (await import('@/shared/lib/fetcher')) as unknown as {
       _get: ReturnType<typeof vi.fn>
@@ -81,17 +86,18 @@ describe('useCurrentUser', () => {
     mod._get.mockResolvedValueOnce({ data: first })
 
     const { Wrapper } = createWrapper()
-    const { result, rerender } = renderHook(
-      () => ({ user: useCurrentUser(), login: useLogin() }),
-      { wrapper: Wrapper },
-    )
+    const { result, rerender } = renderHook(() => ({ user: useCurrentUser(), login: useLogin() }), {
+      wrapper: Wrapper,
+    })
 
     await waitFor(() => expect(result.current.user.isSuccess).toBe(true))
     expect(result.current.user.data?.roles).toEqual(['USER'])
 
     // Next GET should return updated roles
     mod._get.mockResolvedValueOnce({ data: second })
-    mod._post.mockResolvedValueOnce({ data: { accessToken: 'new' } })
+    mod._post.mockResolvedValueOnce({
+      data: { tokenType: 'Bearer', accessToken: 'new', expiresIn: 900 },
+    })
 
     await act(async () => {
       await result.current.login.mutateAsync({ usernameOrEmail: 'x', password: 'y' })
@@ -113,10 +119,9 @@ describe('useCurrentUser', () => {
     mod._post.mockResolvedValueOnce({ data: {} })
 
     const { Wrapper, client } = createWrapper({ logoutLocal: vi.fn() })
-    const { result } = renderHook(
-      () => ({ user: useCurrentUser(), logout: useLogout() }),
-      { wrapper: Wrapper },
-    )
+    const { result } = renderHook(() => ({ user: useCurrentUser(), logout: useLogout() }), {
+      wrapper: Wrapper,
+    })
 
     await waitFor(() => expect(result.current.user.isSuccess).toBe(true))
     expect(client.getQueryData(['currentUser'])).toBeTruthy()

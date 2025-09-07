@@ -1,7 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { setAccessTokenGetter, setAccessTokenSetter, setOnAuthLogout, triggerRefresh } from '@/lib/http'
 import { decodeJwtExp, decodeJwtPayload, extractRoles } from '@/lib/jwt'
+import {
+  setAccessTokenGetter,
+  setAccessTokenSetter,
+  setOnAuthLogout,
+  triggerRefresh,
+} from '@/shared/lib/fetcher'
 
 import { AuthContext, type AuthContextValue } from './context'
 
@@ -119,7 +124,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refresh, scheduleRefresh])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ accessToken, exp, initializing, setAccessToken, refresh, logoutLocal, roles, isAuthenticated: !!accessToken }),
+    () => ({
+      accessToken,
+      exp,
+      initializing,
+      setAccessToken,
+      refresh,
+      logoutLocal,
+      roles,
+      isAuthenticated: !!accessToken,
+    }),
     [accessToken, exp, initializing, refresh, setAccessToken, logoutLocal, roles],
   )
 

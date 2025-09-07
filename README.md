@@ -67,3 +67,21 @@ export default tseslint.config([
   },
 ])
 ```
+
+## OpenAPI Codegen (Contract-First)
+
+- Specs (client contract):
+  - `openapi/catalog.yaml` — product list contract (Spring-style page)
+  - `openapi/iam.yaml` — current user contract
+- Generated outputs (do not edit):
+  - Types: `src/generated/openapi/**/types.ts` (via `openapi-typescript`)
+  - Schemas: `src/generated/openapi/**/schemas.ts` (Zod schemas, schemas-only)
+- Scripts:
+  - `npm run gen:openapi:catalog` → regenerate catalog types + Zod schemas
+  - `npm run gen:openapi:iam` → regenerate IAM types + Zod schemas
+  - `npm run gen:openapi:all` → run both
+- Implementation notes:
+  - Services import types from `types.ts` for compile-time safety.
+  - Services validate responses with Zod from `schemas.ts` at runtime.
+  - We strip zodios client from `openapi-zod-client` output (see `scripts/gen-ozc-schemas-only.mjs`), avoiding extra runtime deps.
+  - Update the YAML specs, then re-run the gen scripts. Commit both specs and generated files.

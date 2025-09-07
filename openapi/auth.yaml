@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: Tokopaedi Auth API (Client Contract)
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /.well-known/jwks.json:
+    get:
+      tags: [Jwk]
+      operationId: getJwks
+      summary: Get JWKS
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object } } } }
+
+  /auth/api/v1/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      summary: Register account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: Resource location of created account (for audit only)
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegisterResponse' }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '409': { description: Conflict, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+
+  /auth/api/v1/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: OK
+          headers:
+            Set-Cookie:
+              description: Refresh token cookie (httpOnly)
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessTokenResponse' }
+        '400': { description: Bad Request, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '415': { description: Unsupported Media Type, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '405': { description: Method Not Allowed, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+
+  /auth/api/v1/refresh:
+    post:
+      tags: [Auth]
+      operationId: refresh
+      summary: Refresh access token (via cookie)
+      responses:
+        '200':
+          description: OK
+          headers:
+            Set-Cookie:
+              description: New refresh token cookie (httpOnly)
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessTokenResponse' }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+
+  /auth/api/v1/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Logout
+      responses:
+        '204':
+          description: No Content
+          headers:
+            Set-Cookie:
+              description: Cleared refresh token cookie (Max-Age=0)
+              schema: { type: string }
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      properties:
+        username: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+      required: [username, email, password]
+    RegisterResponse:
+      type: object
+      properties:
+        message: { type: string }
+      required: [message]
+    LoginRequest:
+      type: object
+      properties:
+        usernameOrEmail: { type: string }
+        password: { type: string, format: password }
+      required: [usernameOrEmail, password]
+    AccessTokenResponse:
+      type: object
+      properties:
+        tokenType: { type: string }
+        accessToken: { type: string }
+        expiresIn: { type: integer, format: int64 }
+      required: [tokenType, accessToken, expiresIn]
+    ApiError:
+      type: object
+      properties:
+        code: { type: string, nullable: true }
+        message: { type: string }
+        upstream: { type: object, nullable: true }
+      required: [message]
+

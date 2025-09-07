@@ -1,39 +1,15 @@
-import { z } from 'zod'
-
+// zod imported via generated schemas; no direct import needed here
+import { schemas as CatalogSchemas } from '@/generated/openapi/catalog/schemas'
+import type { components } from '@/generated/openapi/catalog/types'
 import http, { toApiError, type ApiError } from '@/shared/lib/fetcher'
 
-export const ProductSchema = z.object({
-  id: z.union([z.string(), z.number()]).transform(String),
-  name: z.string(),
-  description: z.string().optional(),
-  price: z.union([z.number(), z.string()]).transform((v) => {
-    if (typeof v === 'number') return v
-    const n = Number(v)
-    return Number.isFinite(n) ? n : undefined
-  }).optional(),
-  brandName: z.string().optional(),
-  categoryName: z.string().optional(),
-})
+// Use Zod schemas generated from OpenAPI for runtime validation
+const ProductPageSchema = CatalogSchemas.ProductPage
 
-export type ProductDto = z.infer<typeof ProductSchema>
+// Use generated type as the source of truth for DTO shape
+export type ProductDto = components['schemas']['Product']
 
-// Spring-like page response
-const SpringPageSchema = z.object({
-  content: z.array(ProductSchema),
-  number: z.number().optional(),
-  size: z.number().optional(),
-  totalElements: z.number().optional(),
-  totalPages: z.number().optional(),
-})
-
-// Generic/alternative page response
-const GenericPageSchema = z.object({
-  items: z.array(ProductSchema),
-  page: z.number().optional(),
-  size: z.number().optional(),
-  total: z.number().optional(),
-  totalPages: z.number().optional(),
-})
+// Note: Contract-first adopts a single (Spring-style) page response
 
 export type ProductListParams = {
   q?: string
@@ -43,52 +19,21 @@ export type ProductListParams = {
   size?: number
 }
 
-export type ProductListResult = {
-  items: ProductDto[]
-  page: number
-  size: number
-  totalElements: number
-  totalPages: number
+export type ProductPageDto = components['schemas']['ProductPage']
+
+function parseProductPage(data: unknown): ProductPageDto {
+  const s = ProductPageSchema.safeParse(data)
+  if (!s.success) throw new Error('Invalid product list response')
+  return s.data
 }
 
-function normalizePage(data: unknown): ProductListResult {
-  // Try Spring Page shape
-  const s = SpringPageSchema.safeParse(data)
-  if (s.success) {
-    return {
-      items: s.data.content,
-      page: s.data.number ?? 0,
-      size: s.data.size ?? s.data.content.length,
-      totalElements: s.data.totalElements ?? s.data.content.length,
-      totalPages: s.data.totalPages ?? 1,
-    }
-  }
-  // Try generic shape
-  const g = GenericPageSchema.safeParse(data)
-  if (g.success) {
-    return {
-      items: g.data.items,
-      page: g.data.page ?? 0,
-      size: g.data.size ?? g.data.items.length,
-      totalElements: g.data.total ?? g.data.items.length,
-      totalPages: g.data.totalPages ?? 1,
-    }
-  }
-  // Array fallback
-  const arr = z.array(ProductSchema).safeParse(data)
-  if (arr.success) {
-    return { items: arr.data, page: 0, size: arr.data.length, totalElements: arr.data.length, totalPages: 1 }
-  }
-  throw new Error('Invalid product list response')
-}
-
-export async function listProductsService(params: ProductListParams): Promise<ProductListResult> {
+// Use path directly from OpenAPI contract - no need for separate base path
+export async function listProductsService(params: ProductListParams): Promise<ProductPageDto> {
   try {
     const res = await http.get('/catalog/api/v1/products', { params })
-    return normalizePage(res.data)
+    return parseProductPage(res.data)
   } catch (err) {
     const e = toApiError(err)
     throw e as ApiError
   }
 }
-

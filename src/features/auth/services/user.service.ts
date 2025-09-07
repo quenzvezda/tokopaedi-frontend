@@ -1,20 +1,26 @@
 import { z } from 'zod'
 
+import { schemas as IamSchemas } from '@/generated/openapi/iam/schemas'
+import type { components } from '@/generated/openapi/iam/types'
 import http from '@/shared/lib/fetcher'
 
-// IAM Current User response schema
-export const CurrentUserSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  email: z.string().optional(),
-  roles: z.array(z.string()).default([]),
-  permissions: z.array(z.string()).default([]),
-})
+export type CurrentUserDto = components['schemas']['CurrentUser']
 
-export type CurrentUserDto = z.infer<typeof CurrentUserSchema>
-
+// Use path directly from OpenAPI contract - no need for separate base path
 export async function getCurrentUserService(): Promise<CurrentUserDto> {
   const res = await http.get<unknown>('/iam/api/v1/users/me')
-  return CurrentUserSchema.parse(res.data)
+  // Relax schema to allow missing arrays in early/mocked responses and default them
+  const CurrentUserRelaxed = IamSchemas.CurrentUser.extend({
+    roles: z.array(z.string()).default([]),
+    permissions: z.array(z.string()).default([]),
+  }).partial({ roles: true, permissions: true })
+  const parsed = CurrentUserRelaxed.parse(res.data)
+  const normalized: CurrentUserDto = {
+    id: parsed.id,
+    username: parsed.username,
+    email: parsed.email ?? undefined,
+    roles: parsed.roles ?? [],
+    permissions: parsed.permissions ?? [],
+  }
+  return normalized
 }
-

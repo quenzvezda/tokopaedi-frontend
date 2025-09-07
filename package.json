@@ -15,7 +15,17 @@
     "typecheck": "tsc -b --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --reporter=line",
-    "prepare": "husky"
+    "prepare": "husky",
+    "gen:openapi:iam:types": "openapi-typescript ./openapi/iam.yaml --output src/generated/openapi/iam/types.ts",
+    "gen:openapi:catalog:types": "openapi-typescript ./openapi/catalog.yaml --output src/generated/openapi/catalog/types.ts",
+    "gen:openapi:auth:types": "openapi-typescript ./openapi/auth.yaml --output src/generated/openapi/auth/types.ts",
+    "gen:openapi:iam:zod": "node scripts/gen-ozc-schemas-only.mjs ./openapi/iam.yaml src/generated/openapi/iam/schemas.ts",
+    "gen:openapi:catalog:zod": "node scripts/gen-ozc-schemas-only.mjs ./openapi/catalog.yaml src/generated/openapi/catalog/schemas.ts",
+    "gen:openapi:auth:zod": "node scripts/gen-ozc-schemas-only.mjs ./openapi/auth.yaml src/generated/openapi/auth/schemas.ts",
+    "gen:openapi:iam": "npm run gen:openapi:iam:types && npm run gen:openapi:iam:zod",
+    "gen:openapi:catalog": "npm run gen:openapi:catalog:types && npm run gen:openapi:catalog:zod",
+    "gen:openapi:auth": "npm run gen:openapi:auth:types && npm run gen:openapi:auth:zod",
+    "gen:openapi:all": "npm run gen:openapi:iam && npm run gen:openapi:catalog && npm run gen:openapi:auth"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.10.9",
@@ -54,7 +64,9 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "openapi-zod-client": "^1.18.3",
+    "openapi-typescript": "^7.5.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,md}": [

@@ -1,13 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
+import type { components as IamComponents } from '@/generated/openapi/iam/types'
+
 import {
   loginService,
   type LoginRequestDto,
   registerService,
   type RegisterRequestDto,
 } from '../services/auth.service'
-import { getCurrentUserService, type CurrentUserDto } from '../services/user.service'
+import { getCurrentUserService } from '../services/user.service'
 import { useAuth } from '../useAuth'
 
 export function useLogin() {
@@ -23,7 +25,7 @@ export function useLogin() {
   })
 }
 
-export type CurrentUser = Pick<CurrentUserDto, 'id' | 'username' | 'email' | 'roles' | 'permissions'>
+export type CurrentUser = IamComponents['schemas']['CurrentUser']
 
 export function useCurrentUser() {
   const { accessToken } = useAuth()
@@ -32,12 +34,13 @@ export function useCurrentUser() {
     enabled: !!accessToken,
     queryFn: async () => {
       const data = await getCurrentUserService()
+      // Ensure arrays are present (spec requires arrays, but keep safe defaults)
       return {
         id: data.id,
         username: data.username,
         email: data.email,
-        roles: data.roles || [],
-        permissions: data.permissions || [],
+        roles: data.roles ?? [],
+        permissions: data.permissions ?? [],
       }
     },
     // cache for the session; invalidated on login/logout
@@ -53,7 +56,7 @@ export function useLogout() {
     mutationFn: async () => {
       try {
         // Try backend logout if available; ignore failures
-        await (await import('@/shared/lib/fetcher')).default.post('/auth/api/v1/auth/logout')
+        await (await import('@/shared/lib/fetcher')).default.post('/auth/api/v1/logout')
       } catch {
         void 0
       }

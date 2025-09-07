@@ -1,0 +1,295 @@
+openapi: 3.0.3
+info:
+  title: Tokopaedi IAM API (Client Contract)
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /iam/api/v1/users/me:
+    get:
+      tags: [User]
+      operationId: getCurrentUser
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /iam/api/v1/permissions:
+    get:
+      tags: [Permission]
+      operationId: listPermissions
+      summary: List permissions
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Permission' }
+    post:
+      tags: [Permission]
+      operationId: createPermission
+      summary: Create permission
+      security: [ { cookieAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PermissionRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
+
+  /iam/api/v1/permissions/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Permission]
+      operationId: getPermission
+      summary: Get permission
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
+    put:
+      tags: [Permission]
+      operationId: updatePermission
+      summary: Update permission
+      security: [ { cookieAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PermissionRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
+    delete:
+      tags: [Permission]
+      operationId: deletePermission
+      summary: Delete permission
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '204': { description: No Content }
+
+  /iam/api/v1/roles:
+    get:
+      tags: [Role]
+      operationId: listRoles
+      summary: List roles
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Role' } } } } }
+    post:
+      tags: [Role]
+      operationId: createRole
+      summary: Create role
+      security: [ { cookieAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoleRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
+
+  /iam/api/v1/roles/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Role]
+      operationId: getRole
+      summary: Get role
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
+    put:
+      tags: [Role]
+      operationId: updateRole
+      summary: Update role
+      security: [ { cookieAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoleRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
+    delete:
+      tags: [Role]
+      operationId: deleteRole
+      summary: Delete role
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '204': { description: No Content }
+
+  /iam/api/v1/assign/role/{roleId}/permission/{permissionId}:
+    parameters:
+      - in: path
+        name: roleId
+        required: true
+        schema: { type: integer, format: int64 }
+      - in: path
+        name: permissionId
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      tags: [Assignment]
+      operationId: addPermissionToRole
+      summary: Add permission to role
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK }
+    delete:
+      tags: [Assignment]
+      operationId: removePermissionFromRole
+      summary: Remove permission from role
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK }
+
+  /iam/api/v1/assign/user/{accountId}/role/{roleId}:
+    parameters:
+      - in: path
+        name: accountId
+        required: true
+        schema: { type: string, format: uuid }
+      - in: path
+        name: roleId
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      tags: [Assignment]
+      operationId: addRoleToUser
+      summary: Add role to user
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK }
+    delete:
+      tags: [Assignment]
+      operationId: removeRoleFromUser
+      summary: Remove role from user
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK }
+
+  /iam/api/v1/authz/check:
+    post:
+      tags: [Authorization]
+      operationId: checkAuthorization
+      summary: Check authorization
+      security: [ { cookieAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthzCheckRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object } } } }
+
+  /iam/internal/v1/users/{accountId}/roles:
+    parameters:
+      - in: path
+        name: accountId
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [User]
+      operationId: getUserRoles
+      summary: Get user roles
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string } } } } }
+
+  /iam/internal/v1/entitlements/{accountId}:
+    parameters:
+      - in: path
+        name: accountId
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Entitlement]
+      operationId: getEntitlements
+      summary: Get entitlements
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object } } } }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+  schemas:
+    Permission:
+      type: object
+      properties:
+        id: { type: integer, format: int64, nullable: true }
+        name: { type: string }
+        description: { type: string, nullable: true }
+      required: [name]
+    PermissionRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+      required: [name]
+    Role:
+      type: object
+      properties:
+        id: { type: integer, format: int64, nullable: true }
+        name: { type: string }
+      required: [name]
+    RoleRequest:
+      type: object
+      properties:
+        name: { type: string }
+      required: [name]
+    AuthzCheckRequest:
+      type: object
+      properties:
+        sub: { type: string, format: uuid }
+        action: { type: string }
+      required: [sub, action]
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        message:
+          type: string
+      required: [message]
+    CurrentUser:
+      type: object
+      properties:
+        id: { type: string }
+        username: { type: string }
+        email: { type: string, format: email, nullable: true }
+        roles: { type: array, items: { type: string } }
+        permissions: { type: array, items: { type: string, description: "permission string in `<service>:<subject>:<action>`" } }
+      required: [id, username, roles, permissions]

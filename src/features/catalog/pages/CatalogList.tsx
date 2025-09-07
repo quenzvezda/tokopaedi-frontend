@@ -92,7 +92,9 @@ function Header() {
                     <Box>
                       <Text fontWeight="semibold">{user.data?.username || 'User'}</Text>
                       {user.data?.email && (
-                        <Text fontSize="sm" color="gray.500">{user.data.email}</Text>
+                        <Text fontSize="sm" color="gray.500">
+                          {user.data.email}
+                        </Text>
                       )}
                     </Box>
                   </HStack>
@@ -128,7 +130,7 @@ function Footer() {
   )
 }
 
-function ProductCard({ name, price }: { name: string; price?: number }) {
+function ProductCard({ name, price }: { name: string; price?: number | null }) {
   return (
     <Card _hover={{ boxShadow: 'md' }} transition="box-shadow 0.2s">
       <Image src="/vite.svg" alt={name} objectFit="contain" h="120px" mt={4} />
@@ -138,7 +140,9 @@ function ProductCard({ name, price }: { name: string; price?: number }) {
         </Heading>
       </CardHeader>
       <CardBody pt={0}>
-        <Text fontWeight="bold">{typeof price === 'number' ? `Rp ${price.toLocaleString('id-ID')}` : '—'}</Text>
+        <Text fontWeight="bold">
+          {typeof price === 'number' ? `Rp ${price.toLocaleString('id-ID')}` : '—'}
+        </Text>
       </CardBody>
     </Card>
   )
@@ -152,7 +156,13 @@ export default function CatalogList() {
   const page = Number(searchParams.get('page') ?? '0')
   const size = Number(searchParams.get('size') ?? '12')
 
-  const { data, isLoading, isError, error, isFetching } = useListProducts({ q, brandId, categoryId, page, size })
+  const { data, isLoading, isError, error, isFetching } = useListProducts({
+    q,
+    brandId,
+    categoryId,
+    page,
+    size,
+  })
 
   function goPage(p: number) {
     const next = new URLSearchParams(searchParams)
@@ -167,7 +177,11 @@ export default function CatalogList() {
         <Stack spacing={4}>
           <HStack justify="space-between">
             <Heading size="lg">Products</Heading>
-            {isFetching && <Text fontSize="sm" color="gray.500">Refreshing…</Text>}
+            {isFetching && (
+              <Text fontSize="sm" color="gray.500">
+                Refreshing…
+              </Text>
+            )}
           </HStack>
 
           {isLoading ? (
@@ -192,7 +206,7 @@ export default function CatalogList() {
                 <Button onClick={() => goPage(page)}>Retry</Button>
               </Stack>
             </Center>
-          ) : data && data.items.length === 0 ? (
+          ) : data && data.content.length === 0 ? (
             <Center py={20}>
               <Stack spacing={2} align="center">
                 <Heading size="md">No products</Heading>
@@ -202,7 +216,7 @@ export default function CatalogList() {
           ) : (
             <>
               <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }} gap={4}>
-                {data?.items.map((p) => (
+                {data?.content.map((p) => (
                   <GridItem key={p.id}>
                     <ProductCard name={p.name} price={p.price} />
                   </GridItem>

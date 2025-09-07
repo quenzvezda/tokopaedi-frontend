@@ -26,7 +26,9 @@ describe('useLogin', () => {
 
 vi.mock('@/shared/lib/fetcher', () => {
   const httpMock = {
-    post: async () => ({ data: { accessToken: 'header.payload.sig' } }),
+    post: async () => ({
+      data: { tokenType: 'Bearer', accessToken: 'header.payload.sig', expiresIn: 900 },
+    }),
     interceptors: { request: { use: () => {} }, response: { use: () => {} } },
   }
   return {
