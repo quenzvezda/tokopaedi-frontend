@@ -34,7 +34,7 @@ describe('getCurrentUserService', () => {
     mod._get.mockResolvedValueOnce({ data })
 
     const result = await getCurrentUserService()
-    expect(mod._get).toHaveBeenCalledWith('/api/iam/v1/users/me')
+    expect(mod._get).toHaveBeenCalledWith('/iam/api/v1/users/me')
     expect(result).toEqual(data)
   })
 
