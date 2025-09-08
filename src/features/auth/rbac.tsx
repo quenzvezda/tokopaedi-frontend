@@ -1,8 +1,8 @@
 import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 
-import { useHasRole } from './hooks/useHasRole'
 import { useHasPermission } from './hooks/useHasPermission'
+import { useHasRole } from './hooks/useHasRole'
 
 export function HasRole({ roles, children }: { roles: string | string[]; children: React.ReactNode }) {
   const ok = useHasRole(roles)
