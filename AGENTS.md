@@ -52,7 +52,8 @@ Cara pakai singkat:
 **Acceptance Criteria**
 
 - [ ] Dependensi inti terpasang.
-- [ ] Skrip npm/pnpm tersedia: `dev`, `build`, `test`, `test:e2e`, `typecheck`, `lint`.
+- [ ] Package manager standar adalah **npm**.
+- [ ] Skrip npm tersedia: `dev`, `build`, `test`, `test:e2e`, `typecheck`, `lint`.
 - [ ] Husky hook: pre-commit (lint-staged), pre-push (typecheck+test).
 
 ---
@@ -352,8 +353,8 @@ Cara pakai singkat:
 
 ## Lampiran A — Quick Start (untuk Agent)
 
-- Jalankan `pnpm i` atau `npm i` untuk menginstal dependensi.
-- Skrip yang disediakan: `dev`, `build`, `test`, `test:e2e`, `typecheck`, `lint`.
+- **Gunakan `npm` sebagai package manager.** Jalankan `npm install` untuk menginstal dependensi.
+- Skrip yang disediakan dijalankan dengan `npm run <nama-skrip>`, contoh: `npm run dev`.
 - Pastikan `.env.example` terisi dan salin menjadi `.env.*` sesuai environment.
 - Struktur dasar src: `app/`, `shared/`, `features/`.
 
