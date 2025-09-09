@@ -37,7 +37,7 @@ import {
   useUpdatePermission,
 } from '../api/hooks'
 import { PermissionForm } from '../components/PermissionForm'
-import { Permission, PermissionRequest } from '../services/permission.service'
+import { Permission, PermissionRequest } from '../types'
 
 const PermissionsPage = () => {
   const { data: permissions, isLoading, isError, error } = useGetPermissions()

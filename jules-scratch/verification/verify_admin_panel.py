@@ -22,8 +22,10 @@ def run(playwright):
             status=200,
             content_type="application/json",
             body=json.dumps([
-                {"id": 1, "name": "permission:one", "description": "This is the first permission."},
-                {"id": 2, "name": "permission:two", "description": "This is the second permission."}
+                {"id": 1, "name": "iam:permission:create", "description": "Create IAM permissions"},
+                {"id": 2, "name": "iam:permission:read", "description": "Read IAM permissions"},
+                {"id": 3, "name": "iam:permission:update", "description": "Update IAM permissions"},
+                {"id": 4, "name": "product:product:read", "description": "Read Product permissions"}
             ])
         ))
 
@@ -35,7 +37,7 @@ def run(playwright):
         ))
 
         print("Navigating to login page...")
-        page.goto("http://localhost:5173/login", timeout=60000)
+        page.goto("http://localhost:5176/login", timeout=60000)
         print("Login page loaded.")
 
         print("Setting access token...")
@@ -47,7 +49,7 @@ def run(playwright):
         print("Auth state updated.")
 
         print("Navigating to admin permissions page...")
-        page.goto("http://localhost:5173/admin/permissions", timeout=60000)
+        page.goto("http://localhost:5176/admin/permissions", timeout=60000)
         print("Admin permissions page loaded.")
 
         print("Waiting for heading to be visible...")

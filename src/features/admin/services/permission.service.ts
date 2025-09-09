@@ -1,16 +1,6 @@
 import http, { toApiError } from '@/shared/lib/fetcher'
 
-// Based on openapi/iam.yaml
-export interface Permission {
-  id: number
-  name: string
-  description?: string
-}
-
-export interface PermissionRequest {
-  name: string
-  description?: string
-}
+import { Permission, PermissionRequest } from '../types'
 
 const permissionsBaseUrl = '/iam/api/v1/permissions'
 

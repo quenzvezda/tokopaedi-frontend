@@ -18,13 +18,10 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useUpdateRole } from '../api/hooks'
-import { type Role } from '../services/role.service'
+import { Role } from '../types'
+import { roleSchema } from '../types/role.zod'
 
-const updateRoleSchema = z.object({
-  name: z.string().min(1, 'Role name is required'),
-})
-
-type UpdateRoleForm = z.infer<typeof updateRoleSchema>
+type UpdateRoleForm = z.infer<typeof roleSchema>
 
 interface EditRoleModalProps {
   isOpen: boolean
@@ -40,7 +37,7 @@ export function EditRoleModal({ isOpen, onClose, role }: EditRoleModalProps) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<UpdateRoleForm>({
-    resolver: zodResolver(updateRoleSchema),
+    resolver: zodResolver(roleSchema),
     values: {
       name: role?.name ?? '',
     },

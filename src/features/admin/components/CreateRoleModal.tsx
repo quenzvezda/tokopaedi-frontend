@@ -18,12 +18,9 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useCreateRole } from '../api/hooks'
+import { roleSchema } from '../types/role.zod'
 
-const createRoleSchema = z.object({
-  name: z.string().min(1, 'Role name is required'),
-})
-
-type CreateRoleForm = z.infer<typeof createRoleSchema>
+type CreateRoleForm = z.infer<typeof roleSchema>
 
 interface CreateRoleModalProps {
   isOpen: boolean
@@ -38,7 +35,7 @@ export function CreateRoleModal({ isOpen, onClose }: CreateRoleModalProps) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<CreateRoleForm>({
-    resolver: zodResolver(createRoleSchema),
+    resolver: zodResolver(roleSchema),
   })
 
   const onSubmit = handleSubmit(async (data) => {

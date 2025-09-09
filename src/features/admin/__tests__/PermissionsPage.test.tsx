@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { server } from '@/test/setup'
 
-import RolesPage from '../pages/RolesPage'
+import PermissionsPage from '../pages/PermissionsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,18 +48,17 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => (
   </BrowserRouter>
 )
 
-const renderRolesPage = () => render(<RolesPage />, { wrapper: AllTheProviders })
+const renderPermissionsPage = () => render(<PermissionsPage />, { wrapper: AllTheProviders })
 
-describe('Roles Page', () => {
+describe('Permissions Page', () => {
   beforeEach(() => {
     queryClient.clear()
     server.resetHandlers()
-    // Mock the roles API to return a default list of roles
     server.use(
-      http.get('http://localhost:8080/iam/api/v1/roles', () =>
+      http.get('http://localhost:8080/iam/api/v1/permissions', () =>
         HttpResponse.json([
-          { id: 1, name: 'ADMIN' },
-          { id: 2, name: 'USER' },
+          { id: 1, name: 'iam:permission:create', description: 'Create IAM permissions' },
+          { id: 2, name: 'iam:permission:read', description: 'Read IAM permissions' },
         ]),
       ),
     )
@@ -69,30 +68,30 @@ describe('Roles Page', () => {
     server.resetHandlers()
   })
 
-  it('renders the role table successfully', async () => {
-    renderRolesPage()
+  it('renders the permission table successfully', async () => {
+    renderPermissionsPage()
     expect(await screen.findByRole('table')).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'ADMIN' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'iam:permission:create' })).toBeInTheDocument()
   })
 
-  it('displays an error message if fetching roles fails', async () => {
+  it('displays an error message if fetching permissions fails', async () => {
     server.use(
-      http.get('http://localhost:8080/iam/api/v1/roles', () =>
-        HttpResponse.json({ message: 'Failed to fetch roles' }, { status: 500 }),
+      http.get('http://localhost:8080/iam/api/v1/permissions', () =>
+        HttpResponse.json({ message: 'Failed to fetch' }, { status: 500 }),
       ),
     )
-    renderRolesPage()
-    expect(await screen.findByText(/Failed to load roles/i)).toBeInTheDocument()
+    renderPermissionsPage()
+    expect(await screen.findByText(/Error: Failed to fetch/i)).toBeInTheDocument()
   })
 
   it('opens create modal and shows validation error', async () => {
     const user = userEvent.setup()
-    renderRolesPage()
+    renderPermissionsPage()
 
-    const createButton = await screen.findByRole('button', { name: /Create Role/i })
+    const createButton = await screen.findByRole('button', { name: /Create Permission/i })
     await user.click(createButton)
 
-    const dialog = await screen.findByRole('dialog', { name: /Create Role/i })
+    const dialog = await screen.findByRole('dialog', { name: /Create Permission/i })
     expect(dialog).toBeInTheDocument()
 
     const submitButton = within(dialog).getByRole('button', { name: /Save/i })

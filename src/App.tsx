@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import RouteBoundary from '@/app/routes/RouteBoundary'
 
-import { AdminLayout } from './features/admin'
+import { AdminLayout, AdminIndexPage, PermissionsPage, RolesPage } from './features/admin'
 import { AuthProvider } from './features/auth/AuthContext'
 import RequireAuth from './features/auth/components/RequireAuth'
 import { RequireRoles } from './features/auth/rbac'
@@ -14,9 +14,6 @@ const Register = lazy(() => import('./features/auth/pages/Register'))
 const CatalogList = lazy(() => import('./features/catalog/pages/CatalogList'))
 const Forbidden = lazy(() => import('./features/misc/pages/Forbidden'))
 const NotFound = lazy(() => import('./features/misc/pages/NotFound'))
-const AdminIndexPage = lazy(() => import('./features/admin/pages/AdminIndexPage'))
-const RolesPage = lazy(() => import('./features/admin/pages/RolesPage'))
-const PermissionsPage = lazy(() => import('./features/admin/pages/PermissionsPage'))
 
 function App() {
   return (

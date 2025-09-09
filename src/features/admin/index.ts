@@ -1,2 +1,6 @@
 export { default as Admin } from './pages/Admin'
 export { default as AdminLayout } from './components/AdminLayout'
+export { default as AdminIndexPage } from './pages/AdminIndexPage'
+export { default as PermissionsPage } from './pages/PermissionsPage'
+export { default as RolesPage } from './pages/RolesPage'
+export * from './types'
