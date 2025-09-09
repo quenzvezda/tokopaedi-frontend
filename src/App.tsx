@@ -1,9 +1,10 @@
 import { Spinner, Center } from '@chakra-ui/react'
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import RouteBoundary from '@/app/routes/RouteBoundary'
 
+import { AdminLayout } from './features/admin'
 import { AuthProvider } from './features/auth/AuthContext'
 import RequireAuth from './features/auth/components/RequireAuth'
 import { RequireRoles } from './features/auth/rbac'
@@ -13,7 +14,8 @@ const Register = lazy(() => import('./features/auth/pages/Register'))
 const CatalogList = lazy(() => import('./features/catalog/pages/CatalogList'))
 const Forbidden = lazy(() => import('./features/misc/pages/Forbidden'))
 const NotFound = lazy(() => import('./features/misc/pages/NotFound'))
-const Admin = lazy(() => import('./features/admin/pages/Admin'))
+const RolesPage = lazy(() => import('./features/admin/pages/RolesPage'))
+const PermissionsPage = lazy(() => import('./features/admin/pages/PermissionsPage'))
 
 function App() {
   return (
@@ -27,24 +29,75 @@ function App() {
           }
         >
           <Routes>
-          <Route path="/login" element={<RouteBoundary><Login /></RouteBoundary>} />
-          <Route path="/register" element={<RouteBoundary><Register /></RouteBoundary>} />
-          <Route path="/" element={<RouteBoundary><CatalogList /></RouteBoundary>} />
-          <Route
-            path="/admin"
-            element={
-              <RequireAuth>
-                <RequireRoles roles="ADMIN">
+            <Route
+              path="/login"
+              element={
+                <RouteBoundary>
+                  <Login />
+                </RouteBoundary>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <RouteBoundary>
+                  <Register />
+                </RouteBoundary>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <RouteBoundary>
+                  <CatalogList />
+                </RouteBoundary>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <RequireRoles roles="ADMIN">
+                    <AdminLayout />
+                  </RequireRoles>
+                </RequireAuth>
+              }
+            >
+              <Route index element={<Navigate to="roles" replace />} />
+              <Route
+                path="roles"
+                element={
                   <RouteBoundary>
-                    <Admin />
+                    <RolesPage />
                   </RouteBoundary>
-                </RequireRoles>
-              </RequireAuth>
-            }
-          />
-          <Route path="/403" element={<RouteBoundary><Forbidden /></RouteBoundary>} />
-          <Route path="*" element={<RouteBoundary><NotFound /></RouteBoundary>} />
-        </Routes>
+                }
+              />
+              <Route
+                path="permissions"
+                element={
+                  <RouteBoundary>
+                    <PermissionsPage />
+                  </RouteBoundary>
+                }
+              />
+            </Route>
+            <Route
+              path="/403"
+              element={
+                <RouteBoundary>
+                  <Forbidden />
+                </RouteBoundary>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <RouteBoundary>
+                  <NotFound />
+                </RouteBoundary>
+              }
+            />
+          </Routes>
         </Suspense>
       </BrowserRouter>
     </AuthProvider>
