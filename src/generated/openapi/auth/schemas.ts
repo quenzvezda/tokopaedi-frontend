@@ -23,3 +23,4 @@ export const schemas = {
   LoginRequest,
   AccessTokenResponse,
 }
+

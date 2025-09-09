@@ -156,3 +156,4 @@ export const schemas = {
   Sku,
   SkuUpdateRequest,
 }
+
