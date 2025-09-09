@@ -14,4 +14,6 @@ export interface Role {
   name: string
 }
 
-export type RoleRequest = Pick<Role, 'name'>
+export interface RoleRequest {
+  name: string
+}

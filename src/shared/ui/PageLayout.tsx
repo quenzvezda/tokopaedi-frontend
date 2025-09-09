@@ -62,12 +62,10 @@ export function Header({ showSearchBar = true }: { showSearchBar?: boolean }) {
   return (
     <Box as="header" position="sticky" top={0} zIndex={1} bg="white" boxShadow="sm">
       <Flex align="center" justify="space-between" px={6} py={3}>
-        <RouterLink to="/">
-          <HStack spacing={3}>
-            <Image src="/vite.svg" alt="logo" boxSize="28px" />
-            <Heading size="md">Tokopaedi</Heading>
-          </HStack>
-        </RouterLink>
+        <HStack spacing={3}>
+          <Image src="/vite.svg" alt="logo" boxSize="28px" />
+          <Heading size="md">Tokopaedi</Heading>
+        </HStack>
         {showSearchBar && (
           <Box as="form" onSubmit={onSubmit} minW={{ base: '40%', md: '50%' }}>
             <Input name="q" placeholder="Search products" defaultValue={q} bg="gray.50" />
