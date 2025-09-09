@@ -18,7 +18,8 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useUpdateRole } from '../api/hooks'
-import { type Role } from '../services/role.service'
+
+import type { Role } from '../types'
 
 const updateRoleSchema = z.object({
   name: z.string().min(1, 'Role name is required'),
