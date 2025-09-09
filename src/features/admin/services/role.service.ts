@@ -1,6 +1,6 @@
 import http, { toApiError } from '@/shared/lib/fetcher'
 
-import { Role, RoleRequest } from '../types'
+import type { Role, RoleRequest } from '../types'
 
 const rolesBaseUrl = '/iam/api/v1/roles'
 
