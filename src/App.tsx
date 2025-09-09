@@ -1,6 +1,6 @@
 import { Spinner, Center } from '@chakra-ui/react'
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import RouteBoundary from '@/app/routes/RouteBoundary'
 
@@ -14,6 +14,7 @@ const Register = lazy(() => import('./features/auth/pages/Register'))
 const CatalogList = lazy(() => import('./features/catalog/pages/CatalogList'))
 const Forbidden = lazy(() => import('./features/misc/pages/Forbidden'))
 const NotFound = lazy(() => import('./features/misc/pages/NotFound'))
+const AdminIndexPage = lazy(() => import('./features/admin/pages/AdminIndexPage'))
 const RolesPage = lazy(() => import('./features/admin/pages/RolesPage'))
 const PermissionsPage = lazy(() => import('./features/admin/pages/PermissionsPage'))
 
@@ -63,7 +64,7 @@ function App() {
                 </RequireAuth>
               }
             >
-              <Route index element={<Navigate to="roles" replace />} />
+              <Route index element={<AdminIndexPage />} />
               <Route
                 path="roles"
                 element={

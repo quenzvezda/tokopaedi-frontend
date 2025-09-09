@@ -3,8 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import { PermissionRequest } from '../services/permission.service'
-import { permissionSchema } from '../services/permission.zod'
+import { PermissionRequest } from '@/features/admin/services/permission.service'
+import { permissionSchema } from '@/features/admin/services/permission.zod'
 
 type PermissionFormValues = z.infer<typeof permissionSchema>
 
