@@ -4,7 +4,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import RouteBoundary from '@/app/routes/RouteBoundary'
 
-import { AdminLayout, AdminIndexPage, PermissionsPage, RolesPage } from './features/admin'
+import {
+  AdminLayout,
+  AdminIndexPage,
+  PermissionsPage,
+  RolesPage,
+  RolePermissionsPage,
+} from './features/admin'
 import { AuthProvider } from './features/auth/AuthContext'
 import RequireAuth from './features/auth/components/RequireAuth'
 import { RequireRoles } from './features/auth/rbac'
@@ -67,6 +73,14 @@ function App() {
                 element={
                   <RouteBoundary>
                     <RolesPage />
+                  </RouteBoundary>
+                }
+              />
+              <Route
+                path="role/:id/assign"
+                element={
+                  <RouteBoundary>
+                    <RolePermissionsPage />
                   </RouteBoundary>
                 }
               />
