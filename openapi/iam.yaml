@@ -146,6 +146,46 @@ paths:
       responses:
         '204': { description: No Content }
 
+  /iam/api/v1/roles/{roleId}/permissions:
+    parameters:
+      - in: path
+        name: roleId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Role]
+      operationId: listRolePermissions
+      summary: List permissions assigned to role
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Permission' }
+
+  /iam/api/v1/roles/{roleId}/permissions/available:
+    parameters:
+      - in: path
+        name: roleId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Role]
+      operationId: listAvailableRolePermissions
+      summary: List permissions not yet assigned to role
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Permission' }
+
   /iam/api/v1/assign/role/{roleId}/permission/{permissionId}:
     parameters:
       - in: path

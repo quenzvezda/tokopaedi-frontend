@@ -19,9 +19,9 @@ const AdminLayout = () => {
   return (
     <Flex direction="column" minH="100vh">
       <Header showSearchBar={false} />
-      <Flex flex="1">
+      <Flex flex="1" position="relative">
         {isOpen && (
-          <Box as="nav" width="250px" bg="gray.100" p={4}>
+          <Box as="nav" width="250px" bg="gray.100" p={4} position="relative">
             <Heading as="h1" size="lg" mb={8}>
               Admin Panel
             </Heading>
@@ -36,15 +36,31 @@ const AdminLayout = () => {
                 Permissions
               </ChakraLink>
             </VStack>
+            <IconButton
+              aria-label="Toggle navigation"
+              icon={<CloseIcon />}
+              onClick={onToggle}
+              position="absolute"
+              top="50%"
+              right="-3"
+              transform="translateY(-50%)"
+              size="sm"
+            />
           </Box>
         )}
-        <Box flex="1" p={8}>
+        {!isOpen && (
           <IconButton
             aria-label="Toggle navigation"
-            icon={isOpen ? <CloseIcon /> : <HamburgerIcon />}
+            icon={<HamburgerIcon />}
             onClick={onToggle}
-            mb={4}
+            position="absolute"
+            top="50%"
+            left="0"
+            transform="translateY(-50%)"
+            size="sm"
           />
+        )}
+        <Box flex="1" p={8}>
           <Outlet />
         </Box>
       </Flex>

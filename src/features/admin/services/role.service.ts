@@ -13,6 +13,15 @@ export async function listRoles(): Promise<Role[]> {
   }
 }
 
+export async function getRole(id: number): Promise<Role> {
+  try {
+    const res = await http.get<Role>(`${rolesBaseUrl}/${id}`)
+    return res.data
+  } catch (err) {
+    throw toApiError(err)
+  }
+}
+
 export async function createRole(data: RoleRequest): Promise<Role> {
   try {
     const res = await http.post<Role>(rolesBaseUrl, data)

@@ -22,6 +22,7 @@ import {
   AlertDialogOverlay,
 } from '@chakra-ui/react'
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 import { useDeleteRole, useGetRoles } from '../api/hooks'
 import { CreateRoleModal } from '../components/CreateRoleModal'
@@ -88,6 +89,15 @@ function RoleManagement() {
                 <Td>{role.id}</Td>
                 <Td>{role.name}</Td>
                 <Td>
+                  <Button
+                    as={Link}
+                    to={`/admin/role/${role.id}/assign`}
+                    size="sm"
+                    mr={2}
+                    leftIcon={<AddIcon />}
+                  >
+                    Permissions
+                  </Button>
                   <IconButton
                     aria-label="Edit role"
                     icon={<EditIcon />}
