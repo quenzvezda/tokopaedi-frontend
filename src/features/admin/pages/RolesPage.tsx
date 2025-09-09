@@ -1,26 +1,29 @@
+import { AddIcon, EditIcon, DeleteIcon } from '@chakra-ui/icons'
 import {
-  Alert,
-  AlertIcon,
-  AlertTitle,
+  Box,
   Heading,
-  HStack,
-  IconButton,
-  Spinner,
-  Stack,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
   Button,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Spinner,
+  Text,
+  Flex,
+  IconButton,
   useDisclosure,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from '@chakra-ui/react'
 import React from 'react'
-import { FaEdit, FaTrash } from 'react-icons/fa'
 
 import { useDeleteRole, useGetRoles } from '../api/hooks'
-import { ConfirmationModal } from '../components/ConfirmationModal'
 import { CreateRoleModal } from '../components/CreateRoleModal'
 import { EditRoleModal } from '../components/EditRoleModal'
 
@@ -28,11 +31,12 @@ import type { Role } from '../types'
 
 function RoleManagement() {
   const { data: roles, isLoading, isError, error } = useGetRoles()
-  const deleteRole = useDeleteRole()
+  const deleteRoleMutation = useDeleteRole()
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure()
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure()
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
+  const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure()
   const [selectedRole, setSelectedRole] = React.useState<Role | null>(null)
+  const cancelRef = React.useRef<HTMLButtonElement>(null)
 
   const handleEditClick = (role: Role) => {
     setSelectedRole(role)
@@ -41,49 +45,35 @@ function RoleManagement() {
 
   const handleDeleteClick = (role: Role) => {
     setSelectedRole(role)
-    onDeleteOpen()
+    onAlertOpen()
   }
 
-  const confirmDelete = async () => {
-    if (!selectedRole) return
-    await deleteRole.mutateAsync(selectedRole.id)
-    onDeleteClose()
-    setSelectedRole(null)
-  }
-
-  if (isLoading) {
-    return <Spinner />
-  }
-
-  if (isError) {
-    return (
-      <Alert status="error">
-        <AlertIcon />
-        <AlertTitle>{error?.message || 'Failed to load roles'}</AlertTitle>
-      </Alert>
-    )
+  const confirmDelete = () => {
+    if (selectedRole) {
+      deleteRoleMutation.mutate(selectedRole.id, {
+        onSuccess: () => {
+          onAlertClose()
+          setSelectedRole(null)
+        },
+      })
+    }
   }
 
   return (
-    <>
-      <CreateRoleModal isOpen={isCreateOpen} onClose={onCreateClose} />
-      <EditRoleModal isOpen={isEditOpen} onClose={onEditClose} role={selectedRole} />
-      <ConfirmationModal
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onConfirm={confirmDelete}
-        title="Delete Role"
-        body={`Are you sure you want to delete the role "${selectedRole?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
-        isConfirming={deleteRole.isPending}
-      />
-      <Stack spacing={4}>
-        <HStack justify="space-between">
-          <Heading size="md">Roles</Heading>
-          <Button colorScheme="teal" size="sm" onClick={onCreateOpen}>
-            Create Role
-          </Button>
-        </HStack>
+    <Box>
+      <Flex justify="space-between" align="center" mb={8}>
+        <Heading as="h2" size="xl">
+          Manage Roles
+        </Heading>
+        <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={onCreateOpen}>
+          Create Role
+        </Button>
+      </Flex>
+
+      {isLoading && <Spinner />}
+      {isError && <Text color="red.500">Error: {error?.message}</Text>}
+
+      {roles && (
         <Table variant="simple">
           <Thead>
             <Tr>
@@ -93,32 +83,59 @@ function RoleManagement() {
             </Tr>
           </Thead>
           <Tbody>
-            {roles?.map((role) => (
+            {roles.map((role) => (
               <Tr key={role.id}>
                 <Td>{role.id}</Td>
                 <Td>{role.name}</Td>
                 <Td>
-                  <HStack>
-                    <IconButton
-                      aria-label="Edit role"
-                      icon={<FaEdit />}
-                      size="sm"
-                      onClick={() => handleEditClick(role)}
-                    />
-                    <IconButton
-                      aria-label="Delete role"
-                      icon={<FaTrash />}
-                      size="sm"
-                      onClick={() => handleDeleteClick(role)}
-                    />
-                  </HStack>
+                  <IconButton
+                    aria-label="Edit role"
+                    icon={<EditIcon />}
+                    mr={2}
+                    onClick={() => handleEditClick(role)}
+                  />
+                  <IconButton
+                    aria-label="Delete role"
+                    icon={<DeleteIcon />}
+                    colorScheme="red"
+                    onClick={() => handleDeleteClick(role)}
+                  />
                 </Td>
               </Tr>
             ))}
           </Tbody>
         </Table>
-      </Stack>
-    </>
+      )}
+
+      <CreateRoleModal isOpen={isCreateOpen} onClose={onCreateClose} />
+      <EditRoleModal isOpen={isEditOpen} onClose={onEditClose} role={selectedRole} />
+
+      <AlertDialog isOpen={isAlertOpen} leastDestructiveRef={cancelRef} onClose={onAlertClose}>
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Role
+            </AlertDialogHeader>
+
+            <AlertDialogBody>Are you sure? You can't undo this action afterwards.</AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onAlertClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={confirmDelete}
+                ml={3}
+                isLoading={deleteRoleMutation.isPending}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+    </Box>
   )
 }
 
