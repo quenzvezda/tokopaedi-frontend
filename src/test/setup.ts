@@ -29,6 +29,15 @@ export const server = setupServer(
   http.get(`${API_URL}/catalog/api/v1/products`, () => {
     return HttpResponse.json({ content: [] })
   }),
+
+  http.post(`${API_URL}/auth/api/v1/refresh`, () => {
+    // For unit tests, a successful refresh can just return a generic token
+    return HttpResponse.json({
+      tokenType: 'Bearer',
+      accessToken: 'refreshed-unit-test-token',
+      expiresIn: 3600,
+    })
+  }),
 )
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))

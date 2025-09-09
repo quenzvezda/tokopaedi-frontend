@@ -32,17 +32,38 @@ export const handlers = [
     }
 
     const { usernameOrEmail, password } = parsed.data
+    // Mock successful login for admin
     if (usernameOrEmail === 'admin' && password === 'password') {
-      return HttpResponse.json({ accessToken: 'fake-admin-token' })
+      return HttpResponse.json({
+        tokenType: 'Bearer',
+        accessToken: 'fake-admin-token',
+        expiresIn: 3600,
+      })
     }
+    // Mock successful login for regular user
     if (usernameOrEmail === 'user' && password === 'password') {
-      return HttpResponse.json({ accessToken: 'fake-user-token' })
+      return HttpResponse.json({
+        tokenType: 'Bearer',
+        accessToken: 'fake-user-token',
+        expiresIn: 3600,
+      })
     }
+    // Mock failed login
     return HttpResponse.json({ message: 'Invalid credentials' }, { status: 401 })
   }),
 
+  http.post(`${API_URL}/auth/api/v1/refresh`, () => {
+    // This handler is crucial for the initial load in AuthProvider
+    return HttpResponse.json({
+      tokenType: 'Bearer',
+      accessToken: 'refreshed-e2e-token',
+      expiresIn: 3600,
+    })
+  }),
+
   http.post(`${API_URL}/auth/api/v1/register`, async () => {
-    return HttpResponse.json({ id: `new-user-${Date.now()}` }, { status: 201 })
+    // Return a response that matches the RegisterResponse schema
+    return HttpResponse.json({ message: 'User registered successfully' }, { status: 201 })
   }),
 
   // ===== IAM =====
