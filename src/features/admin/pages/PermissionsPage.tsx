@@ -37,7 +37,8 @@ import {
   useUpdatePermission,
 } from '../api/hooks'
 import { PermissionForm } from '../components/PermissionForm'
-import { Permission, PermissionRequest } from '../types'
+
+import type { Permission, PermissionRequest } from '../types'
 
 const PermissionsPage = () => {
   const { data: permissions, isLoading, isError, error } = useGetPermissions()
@@ -113,7 +114,7 @@ const PermissionsPage = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {permissions.map((permission) => (
+            {permissions.map((permission: Permission) => (
               <Tr key={permission.id}>
                 <Td>{permission.id}</Td>
                 <Td>{permission.name}</Td>

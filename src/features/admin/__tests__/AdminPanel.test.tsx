@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { server } from '@/test/setup'
 
-import AdminPage from '../pages/Admin'
+import RolesPage from '../pages/RolesPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,7 +48,7 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => (
   </BrowserRouter>
 )
 
-const renderAdminPage = () => render(<AdminPage />, { wrapper: AllTheProviders })
+const renderRolesPage = () => render(<RolesPage />, { wrapper: AllTheProviders })
 
 describe('Admin Panel', () => {
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('Admin Panel', () => {
   })
 
   it('renders the role table successfully', async () => {
-    renderAdminPage()
+    renderRolesPage()
     expect(await screen.findByRole('table')).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'ADMIN' })).toBeInTheDocument()
   })
@@ -72,13 +72,13 @@ describe('Admin Panel', () => {
         HttpResponse.json({ message: 'Failed to fetch' }, { status: 500 }),
       ),
     )
-    renderAdminPage()
+    renderRolesPage()
     expect(await screen.findByText(/Failed to fetch/i)).toBeInTheDocument()
   })
 
   it('opens create modal and shows validation error', async () => {
     const user = userEvent.setup()
-    renderAdminPage()
+    renderRolesPage()
 
     const createButton = await screen.findByRole('button', { name: /Create Role/i })
     await user.click(createButton)
