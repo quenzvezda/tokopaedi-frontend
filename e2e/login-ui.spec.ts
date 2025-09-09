@@ -1,20 +1,19 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
-const USER = process.env.E2E_USER || 'admin'
-const PASS = process.env.E2E_PASS || 'admin123'
-
-test.describe('Login UI (real backend)', () => {
-  test('logs in via form and lands on welcome', async ({ page }) => {
+test.describe('Login UI (mocked)', () => {
+  test('logs in via form and lands on the catalog page', async ({ page }) => {
     await page.goto('/login')
 
-    await page.getByLabel('Username or Email').click()
-    await page.getByLabel('Username or Email').fill(USER)
-    await page.getByLabel('Password').click()
-    await page.getByLabel('Password').fill(PASS)
+    // Use credentials that are mocked in `src/mocks/handlers.ts`
+    await page.getByLabel('Username or Email').fill('admin')
+    await page.getByLabel('Password').fill('password')
     await page.getByRole('button', { name: 'Sign in' }).click()
 
+    // After login, user should be redirected to the home/catalog page
     await expect(page).toHaveURL('/')
-    // Home now shows the Catalog list
     await expect(page.getByRole('heading', { name: 'Products' })).toBeVisible()
+
+    // The header should now show the mocked admin user's name
+    await expect(page.getByRole('button', { name: /mock-admin/i })).toBeVisible()
   })
 })

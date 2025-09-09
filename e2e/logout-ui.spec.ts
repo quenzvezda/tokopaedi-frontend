@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
 test.describe('Logout UI (mocked)', () => {
   test('shows avatar when authenticated, then redirects to /login after Logout', async ({ page }) => {

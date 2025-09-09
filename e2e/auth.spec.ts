@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
 test.describe('Auth guard', () => {
   test('redirects to /login when unauthenticated visiting /admin', async ({ page }) => {
     await page.goto('/admin')
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/login/)
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
   })
 

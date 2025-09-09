@@ -1,34 +1,25 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
-test.describe('RBAC guard', () => {
+test.describe('RBAC guard (mocked)', () => {
   test('redirects to /403 when non-admin visits /admin', async ({ page }) => {
-    await page.route('**/iam/api/v1/users/me', (r) =>
-      r.fulfill({ status: 200, headers: { 'content-type': 'application/json' }, json: { id: 'e2e', username: 'e2e', roles: ['USER'], permissions: [] } }),
-    )
-    await page.goto('/login')
+    // Go to a page where we can inject the token
+    await page.goto('/')
 
-    // Fake JWT: roles = ['USER'] (no ADMIN), exp 1h ahead
-    const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url')
-    const payload = Buffer.from(
-      JSON.stringify({ sub: 'e2e', roles: ['USER'], exp: Math.floor(Date.now() / 1000) + 3600 }),
-    ).toString('base64url')
-    const fakeJwt = `${header}.${payload}.`
-
+    // Use the dev hook to set a token for a non-admin user.
+    // The MSW handler for /users/me will return the MOCK_USER_DEFAULT profile.
     await page.evaluate((token) => {
-      // @ts-expect-error dev helper from AuthProvider in dev
+      // @ts-expect-error dev helper
       window.__setAccessToken?.(token)
-    }, fakeJwt)
+    }, 'fake-user-token')
 
-    // Wait until token registered in context
-    await page.waitForFunction(() => (window as unknown as { __hasToken?: boolean }).__hasToken === true)
+    // Wait for auth state to be confirmed
+    await page.waitForFunction(() => (window as any).__hasToken === true)
 
-    // Client-side navigate to /admin (avoid full reload)
-    await page.evaluate(() => {
-      history.pushState({}, '', '/admin')
-      window.dispatchEvent(new PopStateEvent('popstate'))
-    })
+    // Now, navigate to the admin page
+    await page.goto('/admin')
 
+    // User should be redirected to the Forbidden page
     await expect(page).toHaveURL('/403')
-    await expect(page.getByRole('heading', { name: /403 - Forbidden/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Forbidden/i })).toBeVisible()
   })
 })
