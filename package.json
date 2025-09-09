@@ -28,6 +28,7 @@
     "gen:openapi:all": "npm run gen:openapi:iam && npm run gen:openapi:catalog && npm run gen:openapi:auth"
   },
   "dependencies": {
+    "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/react": "^2.10.9",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",

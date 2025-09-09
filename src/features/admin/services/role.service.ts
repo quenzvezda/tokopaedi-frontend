@@ -1,14 +1,6 @@
 import http, { toApiError } from '@/shared/lib/fetcher'
 
-// Based on openapi/iam.yaml
-export interface Role {
-  id: number
-  name: string
-}
-
-export interface RoleRequest {
-  name: string
-}
+import type { Role, RoleRequest } from '../types'
 
 const rolesBaseUrl = '/iam/api/v1/roles'
 

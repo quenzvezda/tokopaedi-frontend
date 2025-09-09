@@ -7,7 +7,7 @@ import { globalIgnores } from 'eslint/config'
 import importPlugin from 'eslint-plugin-import'
 
 export default tseslint.config([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'public/mockServiceWorker.js']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -35,9 +35,7 @@ export default tseslint.config([
           ],
           alphabetize: { order: 'asc', caseInsensitive: true },
           'newlines-between': 'always',
-          pathGroups: [
-            { pattern: '@/**', group: 'internal', position: 'before' },
-          ],
+          pathGroups: [{ pattern: '@/**', group: 'internal', position: 'before' }],
           pathGroupsExcludedImportTypes: ['builtin'],
         },
       ],
