@@ -63,7 +63,9 @@ export function Header({ showSearchBar = true }: { showSearchBar?: boolean }) {
     <Box as="header" position="sticky" top={0} zIndex={1} bg="white" boxShadow="sm">
       <Flex align="center" justify="space-between" px={6} py={3}>
         <HStack spacing={3}>
-          <Image src="/vite.svg" alt="logo" boxSize="28px" />
+          <RouterLink to="/">
+            <Image src="/vite.svg" alt="logo" boxSize="28px" />
+          </RouterLink>
           <Heading size="md">Tokopaedi</Heading>
         </HStack>
         {showSearchBar && (
