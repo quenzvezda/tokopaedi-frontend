@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
 test.describe('Logout UI (mocked)', () => {
   test('shows avatar when authenticated, then redirects to /login after Logout', async ({ page }) => {
@@ -40,10 +40,10 @@ test.describe('Logout UI (mocked)', () => {
     })
     await expect(page).toHaveURL('/')
 
-    // Open user menu by hovering the menu button (avatar inside)
+    // Open user menu by clicking the menu button (avatar inside)
     const menuButton = page.locator('button[aria-haspopup="menu"]')
     await expect(menuButton).toBeVisible()
-    await menuButton.hover()
+    await menuButton.click()
 
     // Click Logout and expect redirect to /login
     await page.getByRole('menuitem', { name: 'Logout' }).click()

@@ -1,34 +1,19 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
-test.describe('RBAC guard', () => {
+test.describe('RBAC guard (mocked)', () => {
   test('redirects to /403 when non-admin visits /admin', async ({ page }) => {
-    await page.route('**/iam/api/v1/users/me', (r) =>
-      r.fulfill({ status: 200, headers: { 'content-type': 'application/json' }, json: { id: 'e2e', username: 'e2e', roles: ['USER'], permissions: [] } }),
-    )
+    // 1. Login as a non-admin user
     await page.goto('/login')
+    await page.getByLabel('Username or Email').fill('user')
+    await page.getByLabel('Password').fill('password')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page).toHaveURL('/') // Wait for redirect
 
-    // Fake JWT: roles = ['USER'] (no ADMIN), exp 1h ahead
-    const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url')
-    const payload = Buffer.from(
-      JSON.stringify({ sub: 'e2e', roles: ['USER'], exp: Math.floor(Date.now() / 1000) + 3600 }),
-    ).toString('base64url')
-    const fakeJwt = `${header}.${payload}.`
+    // 2. Now, navigate to the admin page
+    await page.goto('/admin')
 
-    await page.evaluate((token) => {
-      // @ts-expect-error dev helper from AuthProvider in dev
-      window.__setAccessToken?.(token)
-    }, fakeJwt)
-
-    // Wait until token registered in context
-    await page.waitForFunction(() => (window as unknown as { __hasToken?: boolean }).__hasToken === true)
-
-    // Client-side navigate to /admin (avoid full reload)
-    await page.evaluate(() => {
-      history.pushState({}, '', '/admin')
-      window.dispatchEvent(new PopStateEvent('popstate'))
-    })
-
+    // 3. User should be redirected to the Forbidden page
     await expect(page).toHaveURL('/403')
-    await expect(page.getByRole('heading', { name: /403 - Forbidden/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Forbidden/i })).toBeVisible()
   })
 })

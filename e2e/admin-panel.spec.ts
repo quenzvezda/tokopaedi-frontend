@@ -34,7 +34,11 @@ test.describe('Admin Panel', () => {
     // Fake JWT for an ADMIN user
     const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url')
     const payload = Buffer.from(
-      JSON.stringify({ sub: 'admin-e2e', roles: ['ADMIN'], exp: Math.floor(Date.now() / 1000) + 3600 }),
+      JSON.stringify({
+        sub: 'admin-e2e',
+        roles: ['ADMIN'],
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      }),
     ).toString('base64url')
     const fakeJwt = `${header}.${payload}.`
 
@@ -44,7 +48,9 @@ test.describe('Admin Panel', () => {
     }, fakeJwt)
 
     // Wait for auth state to update
-    await page.waitForFunction(() => (window as unknown as { __hasToken?: boolean }).__hasToken === true)
+    await page.waitForFunction(
+      () => (window as unknown as { __hasToken?: boolean }).__hasToken === true,
+    )
 
     // The header should update automatically without a reload
     // as the underlying user query is refreshed.
@@ -66,6 +72,6 @@ test.describe('Admin Panel', () => {
     await expect(page.getByRole('cell', { name: 'USER' })).toBeVisible()
 
     // 6. Assert search bar is NOT visible
-    await expect(page.getByPlaceholder(/Search products/i)).not.toBeVisible();
+    await expect(page.getByPlaceholder(/Search products/i)).not.toBeVisible()
   })
 })
