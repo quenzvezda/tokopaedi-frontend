@@ -66,14 +66,12 @@ export const handlers = [
     return HttpResponse.json({ message: 'User registered successfully' }, { status: 201 })
   }),
 
-  http.get(`${API_URL}/auth/api/v1/users`, () => {
-    const payload = [
+  http.get(`${API_URL}/auth/api/v1/users`, () =>
+    HttpResponse.json([
       { id: 'u1', username: 'user1' },
       { id: 'u2', username: 'user2' },
-    ]
-    const parsed = z.array(AuthSchemas.User).safeParse(payload)
-    return HttpResponse.json(parsed.data)
-  }),
+    ]),
+  ),
 
   // ===== IAM =====
   http.get(`${API_URL}/iam/api/v1/users/me`, ({ request }) => {
