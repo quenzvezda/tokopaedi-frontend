@@ -17,9 +17,9 @@ const AdminLayout = () => {
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: true })
 
   return (
-    <Flex direction="column" minH="100vh">
+    <Flex direction="column">
       <Header showSearchBar={false} />
-      <Flex flex="1" position="relative">
+      <Flex flex="1" minH="calc(100vh + 1px)" position="relative">
         {isOpen && (
           <Box as="nav" width="250px" bg="gray.100" p={4} position="relative">
             <Heading as="h1" size="lg" mb={8}>

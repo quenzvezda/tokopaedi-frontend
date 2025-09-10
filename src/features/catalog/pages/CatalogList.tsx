@@ -62,9 +62,9 @@ export default function CatalogList() {
   }
 
   return (
-    <Flex direction="column" minH="100vh">
+    <Flex direction="column">
       <Header />
-      <Box as="main" flex={1} px={6} py={6}>
+      <Box as="main" flex={1} minH="calc(100vh + 1px)" px={6} py={6}>
         <Stack spacing={4}>
           <HStack justify="space-between">
             <Heading size="lg">Products</Heading>
