@@ -12,7 +12,19 @@ import {
   listRolePermissions,
   removePermissionFromRole,
 } from '../services/role-permission.service'
-import { createRole, deleteRole, getRole, listRoles, updateRole } from '../services/role.service'
+import {
+  createRole,
+  deleteRole,
+  getRole,
+  listRoles,
+  updateRole,
+} from '../services/role.service'
+import {
+  assignRoleToUser,
+  getUserRoles,
+  listUsers,
+  removeRoleFromUser,
+} from '../services/user.service'
 
 import type { PermissionRequest, RoleRequest } from '../types'
 const rolesQueryKey = ['roles']
@@ -24,6 +36,8 @@ const availableRolePermissionsQueryKey = (roleId: number) => [
   'permissions',
   'available',
 ]
+const usersQueryKey = ['users']
+const userRolesQueryKey = (accountId: string) => [...usersQueryKey, accountId, 'roles']
 
 export function useGetRoles() {
   return useQuery({
@@ -74,6 +88,43 @@ export function useGetPermissions() {
   return useQuery({
     queryKey: permissionsQueryKey,
     queryFn: listPermissions,
+  })
+}
+
+export function useGetUsers() {
+  return useQuery({
+    queryKey: usersQueryKey,
+    queryFn: listUsers,
+  })
+}
+
+export function useGetUserRoles(accountId: string) {
+  return useQuery({
+    queryKey: userRolesQueryKey(accountId),
+    queryFn: () => getUserRoles(accountId),
+    enabled: !!accountId,
+  })
+}
+
+export function useAssignRoleToUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ accountId, roleId }: { accountId: string; roleId: number }) =>
+      assignRoleToUser(accountId, roleId),
+    onSuccess: (_, { accountId }) => {
+      qc.invalidateQueries({ queryKey: userRolesQueryKey(accountId) })
+    },
+  })
+}
+
+export function useRemoveRoleFromUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ accountId, roleId }: { accountId: string; roleId: number }) =>
+      removeRoleFromUser(accountId, roleId),
+    onSuccess: (_, { accountId }) => {
+      qc.invalidateQueries({ queryKey: userRolesQueryKey(accountId) })
+    },
   })
 }
 

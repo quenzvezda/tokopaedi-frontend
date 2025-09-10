@@ -391,3 +391,12 @@ Cara pakai singkat:
 - [ ] (TODO) Skrip generator OpenAPI ditambahkan (iam, catalog, all).
 - [ ] (TODO) Refactor `features/catalog/services` memakai tipe/skema hasil generate.
 - [ ] (Optional) Tambahkan README singkat cara pakai generator.
+
+---
+
+## Lampiran C — Menjalankan E2E Test
+
+- Jalankan `npm install` untuk memasang dependensi.
+- Unduh browser Playwright sekali saja dengan `npx playwright install`.
+- Beberapa test memakai helper dev-only `__setAccessToken`, pastikan mode dev aktif.
+- Dev server harus berjalan. Konfigurasi `webServer` di `playwright.config.ts` akan memulai `npm run dev` otomatis, atau jalankan manual sebelum `npm run test:e2e`.

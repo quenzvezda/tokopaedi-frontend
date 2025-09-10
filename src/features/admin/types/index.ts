@@ -17,3 +17,8 @@ export interface Role {
 export interface RoleRequest {
   name: string
 }
+
+export interface AdminUser {
+  id: string
+  username: string
+}
