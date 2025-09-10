@@ -10,16 +10,6 @@ test.describe('Admin Panel', () => {
         json: { id: 'admin-e2e', username: 'admin-e2e', roles: ['ADMIN'], permissions: [] },
       }),
     )
-    await page.route('**/iam/api/v1/roles', (r) =>
-      r.fulfill({
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-        json: [
-          { id: 1, name: 'ADMIN' },
-          { id: 2, name: 'USER' },
-        ],
-      }),
-    )
     await page.route('**/catalog/api/v1/products**', (r) =>
       r.fulfill({
         status: 200,
@@ -63,15 +53,12 @@ test.describe('Admin Panel', () => {
 
     // 4. Assert navigation and content
     await expect(page).toHaveURL('/admin')
-    await expect(page.getByRole('heading', { name: /Admin Panel/i })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Admin Panel' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Welcome to Admin Panel' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Roles/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Permissions/i })).toBeVisible()
 
-    // 5. Assert the roles table is visible
-    await expect(page.getByRole('heading', { name: 'Roles' })).toBeVisible()
-    await expect(page.getByRole('table')).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'ADMIN' })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'USER' })).toBeVisible()
-
-    // 6. Assert search bar is NOT visible
+    // 5. Assert search bar is NOT visible
     await expect(page.getByPlaceholder(/Search products/i)).not.toBeVisible()
   })
 })
