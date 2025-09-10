@@ -250,6 +250,20 @@ paths:
       responses:
         '200': { description: OK, content: { application/json: { schema: { type: object } } } }
 
+  /iam/api/v1/users/{accountId}/roles:
+    parameters:
+      - in: path
+        name: accountId
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [User]
+      operationId: getUserRolesPublic
+      summary: Get user roles
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string } } } } }
+
   /iam/internal/v1/users/{accountId}/roles:
     parameters:
       - in: path

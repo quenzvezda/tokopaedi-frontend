@@ -5,7 +5,6 @@ import {
   VStack,
   Link as ChakraLink,
   Heading,
-  Text,
   IconButton,
   useDisclosure,
 } from '@chakra-ui/react'
@@ -26,9 +25,9 @@ const AdminLayout = () => {
               Admin Panel
             </Heading>
             <VStack align="stretch" spacing={4}>
-              <Text color="gray.400" cursor="not-allowed">
+              <ChakraLink as={NavLink} to="/admin/users" _activeLink={{ fontWeight: 'bold' }}>
                 Users
-              </Text>
+              </ChakraLink>
               <ChakraLink as={NavLink} to="/admin/roles" _activeLink={{ fontWeight: 'bold' }}>
                 Roles
               </ChakraLink>

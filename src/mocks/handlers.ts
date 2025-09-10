@@ -66,6 +66,13 @@ export const handlers = [
     return HttpResponse.json({ message: 'User registered successfully' }, { status: 201 })
   }),
 
+  http.get(`${API_URL}/auth/api/v1/users`, () =>
+    HttpResponse.json([
+      { id: 'u1', username: 'user1' },
+      { id: 'u2', username: 'user2' },
+    ]),
+  ),
+
   // ===== IAM =====
   http.get(`${API_URL}/iam/api/v1/users/me`, ({ request }) => {
     const token = request.headers.get('Authorization')?.replace('Bearer ', '')
@@ -89,6 +96,23 @@ export const handlers = [
     const parsed = z.array(IamSchemas.Role).safeParse(payload)
     return HttpResponse.json(parsed.data)
   }),
+
+  http.get(`${API_URL}/iam/api/v1/users/:accountId/roles`, ({ params }) => {
+    const { accountId } = params
+    const map: Record<string, string[]> = {
+      u1: ['USER'],
+      u2: ['USER'],
+    }
+    return HttpResponse.json(map[accountId as string] ?? [])
+  }),
+  http.post(
+    `${API_URL}/iam/api/v1/assign/user/:accountId/role/:roleId`,
+    () => HttpResponse.json({}),
+  ),
+  http.delete(
+    `${API_URL}/iam/api/v1/assign/user/:accountId/role/:roleId`,
+    () => HttpResponse.json({}),
+  ),
 
   // ===== CATALOG =====
   http.get(`${API_URL}/catalog/api/v1/products`, ({ request }) => {

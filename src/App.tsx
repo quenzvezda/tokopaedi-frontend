@@ -10,6 +10,8 @@ import {
   PermissionsPage,
   RolesPage,
   RolePermissionsPage,
+  UsersPage,
+  UserRolesPage,
 } from './features/admin'
 import { AuthProvider } from './features/auth/AuthContext'
 import RequireAuth from './features/auth/components/RequireAuth'
@@ -81,6 +83,22 @@ function App() {
                 element={
                   <RouteBoundary>
                     <RolePermissionsPage />
+                  </RouteBoundary>
+                }
+              />
+              <Route
+                path="users"
+                element={
+                  <RouteBoundary>
+                    <UsersPage />
+                  </RouteBoundary>
+                }
+              />
+              <Route
+                path="user/:accountId/roles"
+                element={
+                  <RouteBoundary>
+                    <UserRolesPage />
                   </RouteBoundary>
                 }
               />
