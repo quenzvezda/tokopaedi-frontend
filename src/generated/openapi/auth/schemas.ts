@@ -15,6 +15,7 @@ const LoginRequest = z.object({ usernameOrEmail: z.string(), password: z.string(
 const AccessTokenResponse = z
   .object({ tokenType: z.string(), accessToken: z.string(), expiresIn: z.number().int() })
   .passthrough()
+const User = z.object({ id: z.string().uuid(), username: z.string() }).passthrough()
 
 export const schemas = {
   RegisterRequest,
@@ -22,5 +23,6 @@ export const schemas = {
   ApiError,
   LoginRequest,
   AccessTokenResponse,
+  User,
 }
 

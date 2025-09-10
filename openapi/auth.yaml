@@ -78,6 +78,21 @@ paths:
               schema: { $ref: '#/components/schemas/AccessTokenResponse' }
         '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
 
+  /auth/api/v1/users:
+    get:
+      tags: [User]
+      operationId: listUsers
+      summary: List users
+      security: [ { cookieAuth: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/User' }
+
   /auth/api/v1/logout:
     post:
       tags: [Auth]
@@ -118,6 +133,12 @@ components:
         accessToken: { type: string }
         expiresIn: { type: integer, format: int64 }
       required: [tokenType, accessToken, expiresIn]
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+      required: [id, username]
     ApiError:
       type: object
       properties:
