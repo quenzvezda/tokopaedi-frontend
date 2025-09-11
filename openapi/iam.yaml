@@ -4,14 +4,14 @@ info:
   version: 1.0.0
 servers:
   - url: /
+security:
+  - bearerAuth: []
 paths:
   /iam/api/v1/users/me:
     get:
       tags: [User]
       operationId: getCurrentUser
       summary: Get current user profile
-      security:
-        - bearerAuth: []
       responses:
         '200':
           description: OK
@@ -37,7 +37,6 @@ paths:
       tags: [Permission]
       operationId: listPermissions
       summary: List permissions
-      security: [ { cookieAuth: [] } ]
       responses:
         '200':
           description: OK
@@ -50,7 +49,6 @@ paths:
       tags: [Permission]
       operationId: createPermission
       summary: Create permission
-      security: [ { cookieAuth: [] } ]
       requestBody:
         required: true
         content:
@@ -69,14 +67,12 @@ paths:
       tags: [Permission]
       operationId: getPermission
       summary: Get permission
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Permission' } } } }
     put:
       tags: [Permission]
       operationId: updatePermission
       summary: Update permission
-      security: [ { cookieAuth: [] } ]
       requestBody:
         required: true
         content:
@@ -88,7 +84,6 @@ paths:
       tags: [Permission]
       operationId: deletePermission
       summary: Delete permission
-      security: [ { cookieAuth: [] } ]
       responses:
         '204': { description: No Content }
 
@@ -97,14 +92,12 @@ paths:
       tags: [Role]
       operationId: listRoles
       summary: List roles
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Role' } } } } }
     post:
       tags: [Role]
       operationId: createRole
       summary: Create role
-      security: [ { cookieAuth: [] } ]
       requestBody:
         required: true
         content:
@@ -123,14 +116,12 @@ paths:
       tags: [Role]
       operationId: getRole
       summary: Get role
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Role' } } } }
     put:
       tags: [Role]
       operationId: updateRole
       summary: Update role
-      security: [ { cookieAuth: [] } ]
       requestBody:
         required: true
         content:
@@ -142,7 +133,6 @@ paths:
       tags: [Role]
       operationId: deleteRole
       summary: Delete role
-      security: [ { cookieAuth: [] } ]
       responses:
         '204': { description: No Content }
 
@@ -156,7 +146,6 @@ paths:
       tags: [Role]
       operationId: listRolePermissions
       summary: List permissions assigned to role
-      security: [ { cookieAuth: [] } ]
       responses:
         '200':
           description: OK
@@ -176,7 +165,6 @@ paths:
       tags: [Role]
       operationId: listAvailableRolePermissions
       summary: List permissions not yet assigned to role
-      security: [ { cookieAuth: [] } ]
       responses:
         '200':
           description: OK
@@ -185,6 +173,103 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Permission' }
+
+  /iam/api/v2/permissions:
+    get:
+      tags: [Permission]
+      operationId: listPermissionsV2
+      summary: List permissions (paginated)
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 0, default: 0 }
+          description: Zero-based page index
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+          description: Page size
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionPage'
+
+  /iam/api/v2/roles:
+    get:
+      tags: [Role]
+      operationId: listRolesV2
+      summary: List roles (paginated)
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 0, default: 0 }
+          description: Zero-based page index
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+          description: Page size
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/RolePage' } } } }
+
+  /iam/api/v2/roles/{roleId}/permissions:
+    parameters:
+      - in: path
+        name: roleId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Role]
+      operationId: listRolePermissionsV2
+      summary: List permissions assigned to role (paginated)
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 0, default: 0 }
+          description: Zero-based page index
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+          description: Page size
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionPage'
+
+  /iam/api/v2/roles/{roleId}/permissions/available:
+    parameters:
+      - in: path
+        name: roleId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Role]
+      operationId: listAvailableRolePermissionsV2
+      summary: List permissions not yet assigned to role (paginated)
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 0, default: 0 }
+          description: Zero-based page index
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+          description: Page size
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionPage'
 
   /iam/api/v1/assign/role/{roleId}/permission/{permissionId}:
     parameters:
@@ -200,14 +285,12 @@ paths:
       tags: [Assignment]
       operationId: addPermissionToRole
       summary: Add permission to role
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK }
     delete:
       tags: [Assignment]
       operationId: removePermissionFromRole
       summary: Remove permission from role
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK }
 
@@ -225,14 +308,12 @@ paths:
       tags: [Assignment]
       operationId: addRoleToUser
       summary: Add role to user
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK }
     delete:
       tags: [Assignment]
       operationId: removeRoleFromUser
       summary: Remove role from user
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK }
 
@@ -241,7 +322,6 @@ paths:
       tags: [Authorization]
       operationId: checkAuthorization
       summary: Check authorization
-      security: [ { cookieAuth: [] } ]
       requestBody:
         required: true
         content:
@@ -260,7 +340,7 @@ paths:
       tags: [User]
       operationId: getUserRolesPublic
       summary: Get user roles
-      security: [ { cookieAuth: [] } ]
+      description: Requires ROLE_ADMIN.
       responses:
         '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string } } } } }
 
@@ -274,7 +354,6 @@ paths:
       tags: [User]
       operationId: getUserRoles
       summary: Get user roles
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: string } } } } }
 
@@ -288,17 +367,26 @@ paths:
       tags: [Entitlement]
       operationId: getEntitlements
       summary: Get entitlements
-      security: [ { cookieAuth: [] } ]
       responses:
         '200': { description: OK, content: { application/json: { schema: { type: object } } } }
 
 components:
   securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: refresh_token
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
+    PermissionPage:
+      type: object
+      description: Spring-style paginated response of Permission
+      properties:
+        content: { type: array, items: { $ref: '#/components/schemas/Permission' } }
+        number: { type: integer, description: Zero-based page index }
+        size: { type: integer }
+        totalElements: { type: integer }
+        totalPages: { type: integer }
+      required: [content]
     Permission:
       type: object
       properties:
@@ -318,6 +406,16 @@ components:
         id: { type: integer, format: int64, nullable: true }
         name: { type: string }
       required: [name]
+    RolePage:
+      type: object
+      description: Spring-style paginated response of Role
+      properties:
+        content: { type: array, items: { $ref: '#/components/schemas/Role' } }
+        number: { type: integer, description: Zero-based page index }
+        size: { type: integer }
+        totalElements: { type: integer }
+        totalPages: { type: integer }
+      required: [content]
     RoleRequest:
       type: object
       properties:

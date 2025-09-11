@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { z } from 'zod'
+// import { z } from 'zod'
 
 import { schemas as AuthSchemas } from '@/generated/openapi/auth/schemas'
 import { schemas as CatalogSchemas } from '@/generated/openapi/catalog/schemas'
@@ -87,13 +87,57 @@ export const handlers = [
     return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
   }),
 
-  http.get(`${API_URL}/iam/api/v1/roles`, () => {
-    const payload = [
+  // v2 paginated roles
+  http.get(`${API_URL}/iam/api/v2/roles`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? '0')
+    const size = Number(url.searchParams.get('size') ?? '12')
+    const all = [
       { id: 1, name: 'ADMIN' },
       { id: 2, name: 'USER' },
       { id: 3, name: 'GUEST' },
+      { id: 4, name: 'EDITOR' },
+      { id: 5, name: 'VIEWER' },
     ]
-    const parsed = z.array(IamSchemas.Role).safeParse(payload)
+    const start = page * size
+    const slice = all.slice(start, start + size)
+    const payload = {
+      content: slice,
+      number: page,
+      size,
+      totalElements: all.length,
+      totalPages: Math.max(1, Math.ceil(all.length / size)),
+    }
+    const parsed = IamSchemas.RolePage.safeParse(payload)
+    if (!parsed.success) {
+      return HttpResponse.json({ message: 'Mock validation failed' }, { status: 500 })
+    }
+    return HttpResponse.json(parsed.data)
+  }),
+
+  // v2 paginated permissions
+  http.get(`${API_URL}/iam/api/v2/permissions`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? '0')
+    const size = Number(url.searchParams.get('size') ?? '12')
+    const all = Array.from({ length: 40 }).map((_, i) => ({
+      id: i + 1,
+      name: `PERM_${i + 1}`,
+      description: `Permission ${i + 1}`,
+    }))
+    const start = page * size
+    const slice = all.slice(start, start + size)
+    const payload = {
+      content: slice,
+      number: page,
+      size,
+      totalElements: all.length,
+      totalPages: Math.max(1, Math.ceil(all.length / size)),
+    }
+    const parsed = IamSchemas.PermissionPage.safeParse(payload)
+    if (!parsed.success) {
+      return HttpResponse.json({ message: 'Mock validation failed' }, { status: 500 })
+    }
     return HttpResponse.json(parsed.data)
   }),
 

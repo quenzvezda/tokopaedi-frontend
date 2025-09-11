@@ -16,13 +16,24 @@ export const server = setupServer(
     return HttpResponse.json({ message: 'Invalid credentials' }, { status: 401 })
   }),
 
-  // IAM
-  http.get(`${API_URL}/iam/api/v1/roles`, () => {
-    const payload = [
+  // IAM v2 (paginated)
+  http.get(`${API_URL}/iam/api/v2/roles`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? '0')
+    const size = Number(url.searchParams.get('size') ?? '12')
+    const all = [
       { id: 1, name: 'ADMIN' },
       { id: 2, name: 'USER' },
     ]
-    return HttpResponse.json(payload)
+    const start = page * size
+    const slice = all.slice(start, start + size)
+    return HttpResponse.json({
+      content: slice,
+      number: page,
+      size,
+      totalElements: all.length,
+      totalPages: Math.max(1, Math.ceil(all.length / size)),
+    })
   }),
 
   // CATALOG

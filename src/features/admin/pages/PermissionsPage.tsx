@@ -41,7 +41,9 @@ import { PermissionForm } from '../components/PermissionForm'
 import type { Permission, PermissionRequest } from '../types'
 
 const PermissionsPage = () => {
-  const { data: permissions, isLoading, isError, error } = useGetPermissions()
+  const [page, setPage] = React.useState(0)
+  const [size] = React.useState(12)
+  const { data, isLoading, isError, error, isFetching } = useGetPermissions({ page, size })
   const createPermissionMutation = useCreatePermission()
   const updatePermissionMutation = useUpdatePermission()
   const deletePermissionMutation = useDeletePermission()
@@ -103,8 +105,8 @@ const PermissionsPage = () => {
       {isLoading && <Spinner />}
       {isError && <Text color="red.500">Error: {error?.message}</Text>}
 
-      {permissions && (
-        <Table variant="simple">
+      {data && (
+        <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
           <Thead>
             <Tr>
               <Th>ID</Th>
@@ -114,29 +116,54 @@ const PermissionsPage = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {permissions.map((permission: Permission) => (
-              <Tr key={permission.id}>
-                <Td>{permission.id}</Td>
-                <Td>{permission.name}</Td>
-                <Td>{permission.description}</Td>
+            {data.content.map((permission) => {
+              const p: Permission = {
+                id: permission.id ?? 0,
+                name: permission.name,
+                description: permission.description ?? undefined,
+              }
+              return (
+              <Tr key={p.id}>
+                <Td>{p.id}</Td>
+                <Td>{p.name}</Td>
+                <Td>{p.description}</Td>
                 <Td>
                   <IconButton
                     aria-label="Edit permission"
                     icon={<EditIcon />}
                     mr={2}
-                    onClick={() => handleEditClick(permission)}
+                    onClick={() => handleEditClick(p)}
                   />
                   <IconButton
                     aria-label="Delete permission"
                     icon={<DeleteIcon />}
                     colorScheme="red"
-                    onClick={() => handleDeleteClick(permission)}
+                    onClick={() => handleDeleteClick(p)}
                   />
                 </Td>
               </Tr>
-            ))}
+              )
+            })}
           </Tbody>
         </Table>
+      )}
+
+      {data && (
+        <Flex justify="center" mt={4} gap={4} align="center">
+          <Button onClick={() => setPage((p) => Math.max(0, p - 1))} isDisabled={page <= 0}>
+            Previous
+          </Button>
+          <Text>
+            Page {page + 1} of {data.totalPages ?? 1}
+            {isFetching ? ' • Refreshing' : ''}
+          </Text>
+          <Button
+            onClick={() => setPage((p) => Math.min((data.totalPages ?? 1) - 1, p + 1))}
+            isDisabled={page + 1 >= (data.totalPages ?? 1)}
+          >
+            Next
+          </Button>
+        </Flex>
       )}
 
       <Modal isOpen={isFormOpen} onClose={onFormClose}>

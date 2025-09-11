@@ -1,5 +1,35 @@
 import { z } from 'zod'
 
+type PermissionPage = {
+  content: Array<Permission>
+  number?: /**
+   * Zero-based page index
+   */
+  number | undefined
+  size?: number | undefined
+  totalElements?: number | undefined
+  totalPages?: number | undefined
+}
+type Permission = {
+  id?: (number | null) | undefined
+  name: string
+  description?: (string | null) | undefined
+}
+type RolePage = {
+  content: Array<Role>
+  number?: /**
+   * Zero-based page index
+   */
+  number | undefined
+  size?: number | undefined
+  totalElements?: number | undefined
+  totalPages?: number | undefined
+}
+type Role = {
+  id?: (number | null) | undefined
+  name: string
+}
+
 const CurrentUser = z
   .object({
     id: z.string(),
@@ -12,14 +42,34 @@ const CurrentUser = z
   })
   .passthrough()
 const ApiError = z.object({ code: z.string().nullish(), message: z.string() }).passthrough()
-const Permission = z
+const Permission: z.ZodType<Permission> = z
   .object({ id: z.number().int().nullish(), name: z.string(), description: z.string().nullish() })
   .passthrough()
 const PermissionRequest = z
   .object({ name: z.string(), description: z.string().nullish() })
   .passthrough()
-const Role = z.object({ id: z.number().int().nullish(), name: z.string() }).passthrough()
+const Role: z.ZodType<Role> = z
+  .object({ id: z.number().int().nullish(), name: z.string() })
+  .passthrough()
 const RoleRequest = z.object({ name: z.string() }).passthrough()
+const PermissionPage: z.ZodType<PermissionPage> = z
+  .object({
+    content: z.array(Permission),
+    number: z.number().int().describe('Zero-based page index').optional(),
+    size: z.number().int().optional(),
+    totalElements: z.number().int().optional(),
+    totalPages: z.number().int().optional(),
+  })
+  .passthrough()
+const RolePage: z.ZodType<RolePage> = z
+  .object({
+    content: z.array(Role),
+    number: z.number().int().describe('Zero-based page index').optional(),
+    size: z.number().int().optional(),
+    totalElements: z.number().int().optional(),
+    totalPages: z.number().int().optional(),
+  })
+  .passthrough()
 const AuthzCheckRequest = z.object({ sub: z.string().uuid(), action: z.string() }).passthrough()
 
 export const schemas = {
@@ -29,6 +79,8 @@ export const schemas = {
   PermissionRequest,
   Role,
   RoleRequest,
+  PermissionPage,
+  RolePage,
   AuthzCheckRequest,
 }
 

@@ -68,7 +68,7 @@ describe('Admin Panel', () => {
 
   it('displays an error message if fetching roles fails', async () => {
     server.use(
-      http.get('http://localhost:8080/iam/api/v1/roles', () =>
+      http.get('http://localhost:8080/iam/api/v2/roles', () =>
         HttpResponse.json({ message: 'Failed to fetch' }, { status: 500 }),
       ),
     )

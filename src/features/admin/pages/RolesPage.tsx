@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
+  HStack,
 } from '@chakra-ui/react'
 import React from 'react'
 import { Link } from 'react-router-dom'
@@ -31,7 +32,9 @@ import { EditRoleModal } from '../components/EditRoleModal'
 import type { Role } from '../types'
 
 function RoleManagement() {
-  const { data: roles, isLoading, isError, error } = useGetRoles()
+  const [page, setPage] = React.useState(0)
+  const [size] = React.useState(12)
+  const { data, isLoading, isError, error, isFetching } = useGetRoles({ page, size })
   const deleteRoleMutation = useDeleteRole()
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure()
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure()
@@ -74,8 +77,8 @@ function RoleManagement() {
       {isLoading && <Spinner />}
       {isError && <Text color="red.500">Error: {error?.message}</Text>}
 
-      {roles && (
-        <Table variant="simple">
+      {data && (
+        <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
           <Thead>
             <Tr>
               <Th>ID</Th>
@@ -84,14 +87,16 @@ function RoleManagement() {
             </Tr>
           </Thead>
           <Tbody>
-            {roles.map((role) => (
+            {data.content.map((role) => {
+              const r: Role = { id: role.id ?? 0, name: role.name }
+              return (
               <Tr key={role.id}>
-                <Td>{role.id}</Td>
-                <Td>{role.name}</Td>
+                <Td>{r.id}</Td>
+                <Td>{r.name}</Td>
                 <Td>
                   <Button
                     as={Link}
-                    to={`/admin/role/${role.id}/assign`}
+                    to={`/admin/role/${r.id}/assign`}
                     size="sm"
                     mr={2}
                     leftIcon={<AddIcon />}
@@ -102,19 +107,38 @@ function RoleManagement() {
                     aria-label="Edit role"
                     icon={<EditIcon />}
                     mr={2}
-                    onClick={() => handleEditClick(role)}
+                    onClick={() => handleEditClick(r)}
                   />
                   <IconButton
                     aria-label="Delete role"
                     icon={<DeleteIcon />}
                     colorScheme="red"
-                    onClick={() => handleDeleteClick(role)}
+                    onClick={() => handleDeleteClick(r)}
                   />
                 </Td>
               </Tr>
-            ))}
+              )
+            })}
           </Tbody>
         </Table>
+      )}
+
+      {data && (
+        <HStack justify="center" mt={4} spacing={4}>
+          <Button onClick={() => setPage((p) => Math.max(0, p - 1))} isDisabled={page <= 0}>
+            Previous
+          </Button>
+          <Text>
+            Page {page + 1} of {data.totalPages ?? 1}
+            {isFetching ? ' • Refreshing' : ''}
+          </Text>
+          <Button
+            onClick={() => setPage((p) => Math.min((data.totalPages ?? 1) - 1, p + 1))}
+            isDisabled={page + 1 >= (data.totalPages ?? 1)}
+          >
+            Next
+          </Button>
+        </HStack>
       )}
 
       <CreateRoleModal isOpen={isCreateOpen} onClose={onCreateClose} />
