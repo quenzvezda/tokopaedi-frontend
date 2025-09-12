@@ -5,6 +5,7 @@ import {
   deletePermission,
   listPermissions,
   updatePermission,
+  type PermissionPageDto,
 } from '../services/permission.service'
 import {
   assignPermissionToRole,
@@ -18,6 +19,8 @@ import {
   getRole,
   listRoles,
   updateRole,
+  type RolePageDto,
+  type RoleListParams,
 } from '../services/role.service'
 import {
   assignRoleToUser,
@@ -39,10 +42,11 @@ const availableRolePermissionsQueryKey = (roleId: number) => [
 const usersQueryKey = ['users']
 const userRolesQueryKey = (accountId: string) => [...usersQueryKey, accountId, 'roles']
 
-export function useGetRoles() {
-  return useQuery({
-    queryKey: rolesQueryKey,
-    queryFn: listRoles,
+export function useGetRoles(params: RoleListParams) {
+  const { page, size, q, sort } = params
+  return useQuery<RolePageDto, { code?: string; message: string }, RolePageDto>({
+    queryKey: [...rolesQueryKey, page, size, q ?? null, sort ?? null],
+    queryFn: () => listRoles({ page, size, q, sort }),
   })
 }
 
@@ -84,10 +88,11 @@ export function useDeleteRole() {
   })
 }
 
-export function useGetPermissions() {
-  return useQuery({
-    queryKey: permissionsQueryKey,
-    queryFn: listPermissions,
+export function useGetPermissions(params: { page: number; size: number; q?: string; sort?: string[] }) {
+  const { page, size, q, sort } = params
+  return useQuery<PermissionPageDto, { code?: string; message: string }, PermissionPageDto>({
+    queryKey: [...permissionsQueryKey, page, size, q ?? null, sort ?? null],
+    queryFn: () => listPermissions({ page, size, q, sort }),
   })
 }
 

@@ -31,6 +31,22 @@ test('admin assigns role to user', async ({ page }) => {
       json: { content: [], page: 0, size: 12, totalPages: 1, totalElements: 0 },
     }),
   )
+  await page.route('**/iam/api/v2/roles**', (r) =>
+    r.fulfill({
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      json: {
+        content: [
+          { id: 1, name: 'ADMIN' },
+          { id: 2, name: 'USER' },
+        ],
+        number: 0,
+        size: 12,
+        totalPages: 1,
+        totalElements: 2,
+      },
+    }),
+  )
   await page.route('**/iam/api/v1/roles', (r) =>
     r.fulfill({
       status: 200,

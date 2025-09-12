@@ -99,6 +99,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/iam/api/v1/roles/{roleId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        /** List permissions assigned to role */
+        get: operations["listRolePermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/api/v1/roles/{roleId}/permissions/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        /** List permissions not yet assigned to role */
+        get: operations["listAvailableRolePermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/api/v2/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List permissions (paginated) */
+        get: operations["listPermissionsV2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/api/v2/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List roles (paginated) */
+        get: operations["listRolesV2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/api/v2/roles/{roleId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        /** List permissions assigned to role (paginated) */
+        get: operations["listRolePermissionsV2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/iam/api/v2/roles/{roleId}/permissions/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        /** List permissions not yet assigned to role (paginated) */
+        get: operations["listAvailableRolePermissionsV2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/iam/api/v1/assign/role/{roleId}/permission/{permissionId}": {
         parameters: {
             query?: never;
@@ -158,6 +268,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/iam/api/v1/users/{accountId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get user roles
+         * @description Requires ROLE_ADMIN.
+         */
+        get: operations["getUserRolesPublic"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/iam/internal/v1/users/{accountId}/roles": {
         parameters: {
             query?: never;
@@ -200,6 +332,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Spring-style paginated response of Permission */
+        PermissionPage: {
+            content: components["schemas"]["Permission"][];
+            /** @description Zero-based page index */
+            number?: number;
+            size?: number;
+            totalElements?: number;
+            totalPages?: number;
+        };
         Permission: {
             /** Format: int64 */
             id?: number | null;
@@ -214,6 +355,15 @@ export interface components {
             /** Format: int64 */
             id?: number | null;
             name: string;
+        };
+        /** @description Spring-style paginated response of Role */
+        RolePage: {
+            content: components["schemas"]["Role"][];
+            /** @description Zero-based page index */
+            number?: number;
+            size?: number;
+            totalElements?: number;
+            totalPages?: number;
         };
         RoleRequest: {
             name: string;
@@ -506,6 +656,170 @@ export interface operations {
             };
         };
     };
+    listRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Permission"][];
+                };
+            };
+        };
+    };
+    listAvailableRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Permission"][];
+                };
+            };
+        };
+    };
+    listPermissionsV2: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index */
+                page?: number;
+                /** @description Page size */
+                size?: number;
+                /** @description Free-text search (case-insensitive contains). Applied to name and description.
+                 *     Minimum length 2. Tokens separated by space are ANDed; fields are ORed.
+                 *      */
+                q?: string;
+                /** @description Sorting by one or more fields. Allowed fields: id, name, description.
+                 *     Example: sort=name,asc&sort=id,asc
+                 *      */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionPage"];
+                };
+            };
+        };
+    };
+    listRolesV2: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index */
+                page?: number;
+                /** @description Page size */
+                size?: number;
+                /** @description Free-text search (case-insensitive contains). Applied to name only.
+                 *     Minimum length 2. Tokens separated by space are ANDed.
+                 *      */
+                q?: string;
+                /** @description Sorting by one or more fields. Allowed fields: id, name.
+                 *     Example: sort=name,asc&sort=id,asc
+                 *      */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePage"];
+                };
+            };
+        };
+    };
+    listRolePermissionsV2: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index */
+                page?: number;
+                /** @description Page size */
+                size?: number;
+            };
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionPage"];
+                };
+            };
+        };
+    };
+    listAvailableRolePermissionsV2: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index */
+                page?: number;
+                /** @description Page size */
+                size?: number;
+            };
+            header?: never;
+            path: {
+                roleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionPage"];
+                };
+            };
+        };
+    };
     addPermissionToRole: {
         parameters: {
             query?: never;
@@ -610,6 +924,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    getUserRolesPublic: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
                 };
             };
         };

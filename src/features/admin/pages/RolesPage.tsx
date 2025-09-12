@@ -9,7 +9,7 @@ import {
   Tr,
   Th,
   Td,
-  Spinner,
+  
   Text,
   Flex,
   IconButton,
@@ -20,9 +20,16 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
+  HStack,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Skeleton,
+  Center,
+  Stack,
 } from '@chakra-ui/react'
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { useDeleteRole, useGetRoles } from '../api/hooks'
 import { CreateRoleModal } from '../components/CreateRoleModal'
@@ -31,7 +38,24 @@ import { EditRoleModal } from '../components/EditRoleModal'
 import type { Role } from '../types'
 
 function RoleManagement() {
-  const { data: roles, isLoading, isError, error } = useGetRoles()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const page = Number(searchParams.get('page') ?? '0')
+  const size = Number(searchParams.get('size') ?? '12')
+  const qParam = searchParams.get('q') ?? ''
+  const sortParam = searchParams.getAll('sort')[0] ?? ''
+
+  const [qInput, setQInput] = React.useState(qParam)
+
+  const sortParts = (sortParam || '').split(',')
+  const sortField = sortParts[0] || ''
+  const sortDir = (sortParts[1] as 'asc' | 'desc' | undefined) || 'asc'
+
+  const { data, isLoading, isError, error, isFetching, refetch } = useGetRoles({
+    page,
+    size,
+    q: qParam || undefined,
+    sort: sortParam ? [sortParam] : undefined,
+  })
   const deleteRoleMutation = useDeleteRole()
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure()
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure()
@@ -60,22 +84,93 @@ function RoleManagement() {
     }
   }
 
+  React.useEffect(() => {
+    const h = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams)
+      const trimmed = qInput.trim()
+      if (trimmed.length >= 2) next.set('q', trimmed)
+      else next.delete('q')
+      next.set('page', '0')
+      setSearchParams(next)
+    }, 400)
+    return () => window.clearTimeout(h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qInput])
+
+  // Ensure default sort is present in URL for stable sorting and predictable toggling
+  React.useEffect(() => {
+    if (!sortParam) {
+      const next = new URLSearchParams(searchParams)
+      next.set('sort', 'name,asc')
+      setSearchParams(next)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortParam])
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const next = new URLSearchParams(searchParams)
+    const trimmed = qInput.trim()
+    if (trimmed.length >= 2) next.set('q', trimmed)
+    else next.delete('q')
+    next.set('page', '0')
+    setSearchParams(next)
+  }
+
+  function setPage(p: number) {
+    const next = new URLSearchParams(searchParams)
+    next.set('page', String(p))
+    setSearchParams(next)
+  }
+
+  function toggleSort(field: 'id' | 'name') {
+    const next = new URLSearchParams(searchParams)
+    if (sortField !== field) {
+      next.delete('sort')
+      next.append('sort', `${field},asc`)
+    } else {
+      if (sortDir === 'asc') next.set('sort', `${field},desc`)
+      else if (sortDir === 'desc') next.delete('sort')
+      else next.set('sort', `${field},asc`)
+    }
+    next.set('page', '0')
+    setSearchParams(next)
+  }
+
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb={8}>
+      <Flex justify="space-between" align="center" mb={4}>
         <Heading as="h2" size="xl">
           Manage Roles
         </Heading>
-        <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={onCreateOpen}>
-          Create Role
-        </Button>
+        <HStack>
+          <Box as="form" onSubmit={onSubmit}>
+            <InputGroup>
+              <Input
+                placeholder="Cari nama/kode/deskripsi..."
+                value={qInput}
+                onChange={(e) => setQInput(e.target.value)}
+                aria-label="Search"
+                size="sm"
+                bg="gray.50"
+              />
+              {qInput && (
+                <InputRightElement width="3rem">
+                  <Button size="xs" onClick={() => setQInput('')} aria-label="Clear search">
+                    ✕
+                  </Button>
+                </InputRightElement>
+              )}
+            </InputGroup>
+          </Box>
+          <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={onCreateOpen}>
+            Create Role
+          </Button>
+        </HStack>
       </Flex>
 
-      {isLoading && <Spinner />}
-      {isError && <Text color="red.500">Error: {error?.message}</Text>}
-
-      {roles && (
-        <Table variant="simple">
+      {isLoading ? (
+        <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
           <Thead>
             <Tr>
               <Th>ID</Th>
@@ -84,37 +179,108 @@ function RoleManagement() {
             </Tr>
           </Thead>
           <Tbody>
-            {roles.map((role) => (
-              <Tr key={role.id}>
-                <Td>{role.id}</Td>
-                <Td>{role.name}</Td>
-                <Td>
-                  <Button
-                    as={Link}
-                    to={`/admin/role/${role.id}/assign`}
-                    size="sm"
-                    mr={2}
-                    leftIcon={<AddIcon />}
-                  >
-                    Permissions
-                  </Button>
-                  <IconButton
-                    aria-label="Edit role"
-                    icon={<EditIcon />}
-                    mr={2}
-                    onClick={() => handleEditClick(role)}
-                  />
-                  <IconButton
-                    aria-label="Delete role"
-                    icon={<DeleteIcon />}
-                    colorScheme="red"
-                    onClick={() => handleDeleteClick(role)}
-                  />
-                </Td>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Tr key={i}>
+                <Td><Skeleton height="16px" /></Td>
+                <Td><Skeleton height="16px" /></Td>
+                <Td><Skeleton height="16px" /></Td>
               </Tr>
             ))}
           </Tbody>
         </Table>
+      ) : isError ? (
+        <Center py={10}>
+          <Stack spacing={2} align="center">
+            <Heading size="md">Error</Heading>
+            <Text color="red.500">{error?.message || 'Failed to load roles'}</Text>
+            <Button onClick={() => refetch()}>Retry</Button>
+          </Stack>
+        </Center>
+      ) : data && data.content.length === 0 ? (
+        <Center py={10}>
+          <Stack spacing={2} align="center">
+            <Heading size="md">Tidak ada hasil</Heading>
+            <Text color="gray.500">
+              {qParam ? `Tidak ada hasil untuk '${qParam}'` : 'Coba ubah pencarian Anda'}
+            </Text>
+          </Stack>
+        </Center>
+      ) : (
+        data && (
+          <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
+            <Thead>
+              <Tr>
+                <Th
+                  onClick={() => toggleSort('id')}
+                  cursor="pointer"
+                  aria-sort={sortField === 'id' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  ID {sortField === 'id' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </Th>
+                <Th
+                  onClick={() => toggleSort('name')}
+                  cursor="pointer"
+                  aria-sort={sortField === 'name' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  Name {sortField === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </Th>
+                <Th>Actions</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {data.content.map((role) => {
+                const r: Role = { id: role.id ?? 0, name: role.name }
+                return (
+                  <Tr key={role.id}>
+                    <Td>{r.id}</Td>
+                    <Td>{r.name}</Td>
+                    <Td>
+                      <Button
+                        as={Link}
+                        to={`/admin/role/${r.id}/assign`}
+                        size="sm"
+                        mr={2}
+                        leftIcon={<AddIcon />}
+                      >
+                        Permissions
+                      </Button>
+                      <IconButton
+                        aria-label="Edit role"
+                        icon={<EditIcon />}
+                        mr={2}
+                        onClick={() => handleEditClick(r)}
+                      />
+                      <IconButton
+                        aria-label="Delete role"
+                        icon={<DeleteIcon />}
+                        colorScheme="red"
+                        onClick={() => handleDeleteClick(r)}
+                      />
+                    </Td>
+                  </Tr>
+                )
+              })}
+            </Tbody>
+          </Table>
+        )
+      )}
+
+      {data && (
+        <HStack justify="center" mt={4} spacing={4}>
+          <Button onClick={() => setPage(Math.max(0, page - 1))} isDisabled={page <= 0}>
+            Previous
+          </Button>
+          <Text>
+            Page {page + 1} of {data.totalPages ?? 1}
+            {isFetching ? ' • Refreshing' : ''}
+          </Text>
+          <Button
+            onClick={() => setPage(Math.min((data.totalPages ?? 1) - 1, page + 1))}
+            isDisabled={page + 1 >= (data.totalPages ?? 1)}
+          >
+            Next
+          </Button>
+        </HStack>
       )}
 
       <CreateRoleModal isOpen={isCreateOpen} onClose={onCreateClose} />

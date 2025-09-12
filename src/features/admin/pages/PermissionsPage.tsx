@@ -9,7 +9,6 @@ import {
   Tr,
   Th,
   Td,
-  Spinner,
   Text,
   Flex,
   IconButton,
@@ -27,8 +26,16 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Center,
+  HStack,
+  Stack,
+  Skeleton,
 } from '@chakra-ui/react'
 import React from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import {
   useGetPermissions,
@@ -41,7 +48,24 @@ import { PermissionForm } from '../components/PermissionForm'
 import type { Permission, PermissionRequest } from '../types'
 
 const PermissionsPage = () => {
-  const { data: permissions, isLoading, isError, error } = useGetPermissions()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const page = Number(searchParams.get('page') ?? '0')
+  const size = Number(searchParams.get('size') ?? '12')
+  const qParam = searchParams.get('q') ?? ''
+  const sortParam = searchParams.getAll('sort')[0] ?? ''
+
+  const [qInput, setQInput] = React.useState(qParam)
+
+  const sortParts = (sortParam || '').split(',')
+  const sortField = sortParts[0] || ''
+  const sortDir = (sortParts[1] as 'asc' | 'desc' | undefined) || 'asc'
+
+  const { data, isLoading, isError, error, isFetching, refetch } = useGetPermissions({
+    page,
+    size,
+    q: qParam || undefined,
+    sort: sortParam ? [sortParam] : undefined,
+  })
   const createPermissionMutation = useCreatePermission()
   const updatePermissionMutation = useUpdatePermission()
   const deletePermissionMutation = useDeletePermission()
@@ -89,22 +113,93 @@ const PermissionsPage = () => {
     }
   }
 
+  React.useEffect(() => {
+    const h = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams)
+      const trimmed = qInput.trim()
+      if (trimmed.length >= 2) next.set('q', trimmed)
+      else next.delete('q')
+      next.set('page', '0')
+      setSearchParams(next)
+    }, 400)
+    return () => window.clearTimeout(h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qInput])
+
+  // Ensure default sort is present for predictable behavior
+  React.useEffect(() => {
+    if (!sortParam) {
+      const next = new URLSearchParams(searchParams)
+      next.set('sort', 'name,asc')
+      setSearchParams(next)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortParam])
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const next = new URLSearchParams(searchParams)
+    const trimmed = qInput.trim()
+    if (trimmed.length >= 2) next.set('q', trimmed)
+    else next.delete('q')
+    next.set('page', '0')
+    setSearchParams(next)
+  }
+
+  function setPage(p: number) {
+    const next = new URLSearchParams(searchParams)
+    next.set('page', String(p))
+    setSearchParams(next)
+  }
+
+  function toggleSort(field: 'id' | 'name' | 'description') {
+    const next = new URLSearchParams(searchParams)
+    if (sortField !== field) {
+      next.delete('sort')
+      next.append('sort', `${field},asc`)
+    } else {
+      if (sortDir === 'asc') next.set('sort', `${field},desc`)
+      else if (sortDir === 'desc') next.delete('sort')
+      else next.set('sort', `${field},asc`)
+    }
+    next.set('page', '0')
+    setSearchParams(next)
+  }
+
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb={8}>
+      <Flex justify="space-between" align="center" mb={4}>
         <Heading as="h2" size="xl">
           Manage Permissions
         </Heading>
-        <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={handleCreateClick}>
-          Create Permission
-        </Button>
+        <HStack>
+          <Box as="form" onSubmit={onSubmit}>
+            <InputGroup>
+              <Input
+                placeholder="Cari nama/kode/deskripsi..."
+                value={qInput}
+                onChange={(e) => setQInput(e.target.value)}
+                aria-label="Search"
+                size="sm"
+                bg="gray.50"
+              />
+              {qInput && (
+                <InputRightElement width="3rem">
+                  <Button size="xs" onClick={() => setQInput('')} aria-label="Clear search">
+                    ✕
+                  </Button>
+                </InputRightElement>
+              )}
+            </InputGroup>
+          </Box>
+          <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={handleCreateClick}>
+            Create Permission
+          </Button>
+        </HStack>
       </Flex>
 
-      {isLoading && <Spinner />}
-      {isError && <Text color="red.500">Error: {error?.message}</Text>}
-
-      {permissions && (
-        <Table variant="simple">
+      {isLoading ? (
+        <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
           <Thead>
             <Tr>
               <Th>ID</Th>
@@ -114,29 +209,114 @@ const PermissionsPage = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {permissions.map((permission: Permission) => (
-              <Tr key={permission.id}>
-                <Td>{permission.id}</Td>
-                <Td>{permission.name}</Td>
-                <Td>{permission.description}</Td>
-                <Td>
-                  <IconButton
-                    aria-label="Edit permission"
-                    icon={<EditIcon />}
-                    mr={2}
-                    onClick={() => handleEditClick(permission)}
-                  />
-                  <IconButton
-                    aria-label="Delete permission"
-                    icon={<DeleteIcon />}
-                    colorScheme="red"
-                    onClick={() => handleDeleteClick(permission)}
-                  />
-                </Td>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Tr key={i}>
+                <Td><Skeleton height="16px" /></Td>
+                <Td><Skeleton height="16px" /></Td>
+                <Td><Skeleton height="16px" /></Td>
+                <Td><Skeleton height="16px" /></Td>
               </Tr>
             ))}
           </Tbody>
         </Table>
+      ) : isError ? (
+        <Center py={10}>
+          <Stack spacing={2} align="center">
+            <Heading size="md">Error</Heading>
+            <Text color="red.500">{error?.message || 'Failed to load permissions'}</Text>
+            <Button onClick={() => refetch()}>Retry</Button>
+          </Stack>
+        </Center>
+      ) : data && data.content.length === 0 ? (
+        <Center py={10}>
+          <Stack spacing={2} align="center">
+            <Heading size="md">Tidak ada hasil</Heading>
+            <Text color="gray.500">
+              {qParam ? `Tidak ada hasil untuk '${qParam}'` : 'Coba ubah pencarian Anda'}
+            </Text>
+          </Stack>
+        </Center>
+      ) : (
+        data && (
+          <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
+            <Thead>
+              <Tr>
+                <Th
+                  onClick={() => toggleSort('id')}
+                  cursor="pointer"
+                  aria-sort={sortField === 'id' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  ID {sortField === 'id' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </Th>
+                <Th
+                  onClick={() => toggleSort('name')}
+                  cursor="pointer"
+                  aria-sort={sortField === 'name' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  Name {sortField === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </Th>
+                <Th
+                  onClick={() => toggleSort('description')}
+                  cursor="pointer"
+                  aria-sort={
+                    sortField === 'description' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
+                  }
+                >
+                  Description {sortField === 'description' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </Th>
+                <Th>Actions</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {data.content.map((permission) => {
+                const p: Permission = {
+                  id: permission.id ?? 0,
+                  name: permission.name,
+                  description: permission.description ?? undefined,
+                }
+                return (
+                  <Tr key={p.id}>
+                    <Td>{p.id}</Td>
+                    <Td>{p.name}</Td>
+                    <Td>{p.description}</Td>
+                    <Td>
+                      <IconButton
+                        aria-label="Edit permission"
+                        icon={<EditIcon />}
+                        mr={2}
+                        onClick={() => handleEditClick(p)}
+                      />
+                      <IconButton
+                        aria-label="Delete permission"
+                        icon={<DeleteIcon />}
+                        colorScheme="red"
+                        onClick={() => handleDeleteClick(p)}
+                      />
+                    </Td>
+                  </Tr>
+                )
+              })}
+            </Tbody>
+          </Table>
+        )
+      )}
+
+      {data && (
+        <Flex justify="center" mt={4} gap={4} align="center">
+          <Button onClick={() => setPage(Math.max(0, page - 1))} isDisabled={page <= 0}>
+            Previous
+          </Button>
+          <Text>
+            Page {page + 1} of {data.totalPages ?? 1}
+            {isFetching ? ' • Refreshing' : ''}
+          </Text>
+          <Button
+            onClick={() => setPage(Math.min((data.totalPages ?? 1) - 1, page + 1))}
+            isDisabled={page + 1 >= (data.totalPages ?? 1)}
+          >
+            Next
+          </Button>
+        </Flex>
       )}
 
       <Modal isOpen={isFormOpen} onClose={onFormClose}>

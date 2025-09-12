@@ -24,18 +24,15 @@ import {
 import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import {
-  useGetRoles,
-  useGetUserRoles,
-  useRemoveRoleFromUser,
-} from '../api/hooks'
+import { useGetRoles, useGetUserRoles, useRemoveRoleFromUser } from '../api/hooks'
 import { AssignRoleModal } from '../components/AssignRoleModal'
 
 import type { Role } from '../types'
 
 export default function UserRolesPage() {
   const { accountId } = useParams()
-  const { data: allRoles } = useGetRoles()
+  // For assignment, fetch a large first page to approximate full list
+  const { data: rolesPage } = useGetRoles({ page: 0, size: 1000 })
   const {
     data: roleNames,
     isLoading,
@@ -57,14 +54,18 @@ export default function UserRolesPage() {
   const [selectedRole, setSelectedRole] = React.useState<Role | null>(null)
 
   const assignedRoles = React.useMemo(() => {
-    if (!allRoles || !roleNames) return []
-    return allRoles.filter((r) => roleNames.includes(r.name))
-  }, [allRoles, roleNames])
+    if (!rolesPage || !roleNames) return []
+    return rolesPage.content
+      .filter((r) => roleNames.includes(r.name))
+      .map((r) => ({ id: r.id ?? 0, name: r.name }))
+  }, [rolesPage, roleNames])
 
   const availableRoles = React.useMemo(() => {
-    if (!allRoles || !roleNames) return []
-    return allRoles.filter((r) => !roleNames.includes(r.name))
-  }, [allRoles, roleNames])
+    if (!rolesPage || !roleNames) return []
+    return rolesPage.content
+      .filter((r) => !roleNames.includes(r.name))
+      .map((r) => ({ id: r.id ?? 0, name: r.name }))
+  }, [rolesPage, roleNames])
 
   const handleRemoveClick = (role: Role) => {
     setSelectedRole(role)
@@ -103,7 +104,7 @@ export default function UserRolesPage() {
       {isError && <Text color="red.500">Error: {error?.message}</Text>}
 
       {assignedRoles && (
-        <Table variant="simple">
+        <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
           <Thead>
             <Tr>
               <Th>ID</Th>
