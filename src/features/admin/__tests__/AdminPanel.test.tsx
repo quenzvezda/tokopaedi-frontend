@@ -63,7 +63,7 @@ describe('Admin Panel', () => {
   it('renders the role table successfully', async () => {
     renderRolesPage()
     expect(await screen.findByRole('table')).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'ADMIN' })).toBeInTheDocument()
+    expect(await screen.findByRole('cell', { name: 'ADMIN' })).toBeInTheDocument()
   })
 
   it('displays an error message if fetching roles fails', async () => {

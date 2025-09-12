@@ -707,6 +707,14 @@ export interface operations {
                 page?: number;
                 /** @description Page size */
                 size?: number;
+                /** @description Free-text search (case-insensitive contains). Applied to name and description.
+                 *     Minimum length 2. Tokens separated by space are ANDed; fields are ORed.
+                 *      */
+                q?: string;
+                /** @description Sorting by one or more fields. Allowed fields: id, name, description.
+                 *     Example: sort=name,asc&sort=id,asc
+                 *      */
+                sort?: string[];
             };
             header?: never;
             path?: never;
@@ -732,6 +740,14 @@ export interface operations {
                 page?: number;
                 /** @description Page size */
                 size?: number;
+                /** @description Free-text search (case-insensitive contains). Applied to name only.
+                 *     Minimum length 2. Tokens separated by space are ANDed.
+                 *      */
+                q?: string;
+                /** @description Sorting by one or more fields. Allowed fields: id, name.
+                 *     Example: sort=name,asc&sort=id,asc
+                 *      */
+                sort?: string[];
             };
             header?: never;
             path?: never;

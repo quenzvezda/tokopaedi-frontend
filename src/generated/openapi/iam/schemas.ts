@@ -2,10 +2,7 @@ import { z } from 'zod'
 
 type PermissionPage = {
   content: Array<Permission>
-  number?: /**
-   * Zero-based page index
-   */
-  number | undefined
+  number?: number | undefined
   size?: number | undefined
   totalElements?: number | undefined
   totalPages?: number | undefined
@@ -17,10 +14,7 @@ type Permission = {
 }
 type RolePage = {
   content: Array<Role>
-  number?: /**
-   * Zero-based page index
-   */
-  number | undefined
+  number?: number | undefined
   size?: number | undefined
   totalElements?: number | undefined
   totalPages?: number | undefined

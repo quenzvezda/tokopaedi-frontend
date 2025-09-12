@@ -21,18 +21,85 @@ export const server = setupServer(
     const url = new URL(request.url)
     const page = Number(url.searchParams.get('page') ?? '0')
     const size = Number(url.searchParams.get('size') ?? '12')
-    const all = [
+    const q = (url.searchParams.get('q') || '').trim().toLowerCase()
+    const sortParams = url.searchParams.getAll('sort')
+    let data = [
       { id: 1, name: 'ADMIN' },
       { id: 2, name: 'USER' },
+      { id: 3, name: 'AUDITOR' },
     ]
+    if (q.length >= 2) {
+      const tokens = q.split(/\s+/)
+      data = data.filter((r) => tokens.every((t) => r.name.toLowerCase().includes(t)))
+    }
+    if (sortParams.length > 0) {
+      const [field, dir] = (sortParams[0] || '').split(',') as [keyof typeof data[number] | undefined, string]
+      if (field) {
+        data = [...data].sort((a, b) => {
+          const av = a[field] as unknown as string | number
+          const bv = b[field] as unknown as string | number
+          if (typeof av === 'string' && typeof bv === 'string') {
+            return (av.localeCompare(bv)) * (dir === 'desc' ? -1 : 1)
+          }
+          return ((av as number) - (bv as number)) * (dir === 'desc' ? -1 : 1)
+        })
+      }
+    }
     const start = page * size
-    const slice = all.slice(start, start + size)
+    const slice = data.slice(start, start + size)
     return HttpResponse.json({
       content: slice,
       number: page,
       size,
-      totalElements: all.length,
-      totalPages: Math.max(1, Math.ceil(all.length / size)),
+      totalElements: data.length,
+      totalPages: Math.max(1, Math.ceil(data.length / size)),
+    })
+  }),
+
+  http.get(`${API_URL}/iam/api/v2/permissions`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? '0')
+    const size = Number(url.searchParams.get('size') ?? '12')
+    const q = (url.searchParams.get('q') || '').trim().toLowerCase()
+    const sortParams = url.searchParams.getAll('sort')
+    let data = [
+      { id: 10, name: 'user.read', description: 'Read user data' },
+      { id: 11, name: 'user.write', description: 'Write user data' },
+      { id: 20, name: 'order.read', description: 'Read order data' },
+      { id: 21, name: 'order.write', description: 'Write order data' },
+    ]
+    if (q.length >= 2) {
+      const tokens = q.split(/\s+/)
+      data = data.filter((p) =>
+        tokens.every(
+          (t) => p.name.toLowerCase().includes(t) || (p.description || '').toLowerCase().includes(t),
+        ),
+      )
+    }
+    if (sortParams.length > 0) {
+      const [field, dir] = (sortParams[0] || '').split(',') as [keyof typeof data[number] | undefined, string]
+      if (field) {
+        data = [...data].sort((a, b) => {
+          const av = a[field] as unknown as string | number | undefined
+          const bv = b[field] as unknown as string | number | undefined
+          if (av == null && bv == null) return 0
+          if (av == null) return 1
+          if (bv == null) return -1
+          if (typeof av === 'string' && typeof bv === 'string') {
+            return (av.localeCompare(bv)) * (dir === 'desc' ? -1 : 1)
+          }
+          return ((av as number) - (bv as number)) * (dir === 'desc' ? -1 : 1)
+        })
+      }
+    }
+    const start = page * size
+    const slice = data.slice(start, start + size)
+    return HttpResponse.json({
+      content: slice,
+      number: page,
+      size,
+      totalElements: data.length,
+      totalPages: Math.max(1, Math.ceil(data.length / size)),
     })
   }),
 

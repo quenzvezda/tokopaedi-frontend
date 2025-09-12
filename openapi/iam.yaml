@@ -189,6 +189,25 @@ paths:
           name: size
           schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
           description: Page size
+        - in: query
+          name: q
+          schema: { type: string, minLength: 2 }
+          description: |
+            Free-text search (case-insensitive contains). Applied to name and description.
+            Minimum length 2. Tokens separated by space are ANDed; fields are ORed.
+        - in: query
+          name: sort
+          style: form
+          explode: true
+          allowReserved: true
+          schema:
+            type: array
+            items:
+              type: string
+              description: "Sort clause in the form '<field>[,asc|desc]'. Default direction asc."
+          description: |
+            Sorting by one or more fields. Allowed fields: id, name, description.
+            Example: sort=name,asc&sort=id,asc
       responses:
         '200':
           description: OK
@@ -212,6 +231,25 @@ paths:
           name: size
           schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
           description: Page size
+        - in: query
+          name: q
+          schema: { type: string, minLength: 2 }
+          description: |
+            Free-text search (case-insensitive contains). Applied to name only.
+            Minimum length 2. Tokens separated by space are ANDed.
+        - in: query
+          name: sort
+          style: form
+          explode: true
+          allowReserved: true
+          schema:
+            type: array
+            items:
+              type: string
+              description: "Sort clause in the form '<field>[,asc|desc]'. Default direction asc."
+          description: |
+            Sorting by one or more fields. Allowed fields: id, name.
+            Example: sort=name,asc&sort=id,asc
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/RolePage' } } } }
 
