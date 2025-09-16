@@ -18,6 +18,9 @@ function buildSearchParams(params: RoleListParams): URLSearchParams {
   if (params.q && params.q.trim().length >= 2) usp.set('q', params.q.trim())
   if (params.sort && params.sort.length > 0) {
     for (const s of params.sort) usp.append('sort', s)
+  } else {
+    // Default server-side sort to keep results predictable without polluting the URL
+    usp.append('sort', 'name,asc')
   }
   return usp
 }

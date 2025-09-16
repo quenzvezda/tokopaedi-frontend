@@ -126,15 +126,14 @@ const PermissionsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput])
 
-  // Ensure default sort is present for predictable behavior
-  React.useEffect(() => {
-    if (!sortParam) {
-      const next = new URLSearchParams(searchParams)
-      next.set('sort', 'name,asc')
-      setSearchParams(next)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortParam])
+  // Interpret default sort internally (do not write to URL)
+  const defaultSortField: 'id' | 'name' | 'description' = 'name'
+  const defaultSortDir: 'asc' | 'desc' = 'asc'
+  const hasSortParam = Boolean(sortParam)
+  const effectiveSortField = (
+    hasSortParam ? (sortField as 'id' | 'name' | 'description') : defaultSortField
+  )
+  const effectiveSortDir = hasSortParam ? sortDir : defaultSortDir
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -154,12 +153,12 @@ const PermissionsPage = () => {
 
   function toggleSort(field: 'id' | 'name' | 'description') {
     const next = new URLSearchParams(searchParams)
-    if (sortField !== field) {
+    if (effectiveSortField !== field) {
       next.delete('sort')
       next.append('sort', `${field},asc`)
     } else {
-      if (sortDir === 'asc') next.set('sort', `${field},desc`)
-      else if (sortDir === 'desc') next.delete('sort')
+      if (effectiveSortDir === 'asc') next.set('sort', `${field},desc`)
+      else if (effectiveSortDir === 'desc') next.delete('sort')
       else next.set('sort', `${field},asc`)
     }
     next.set('page', '0')

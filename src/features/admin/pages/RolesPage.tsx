@@ -97,15 +97,12 @@ function RoleManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput])
 
-  // Ensure default sort is present in URL for stable sorting and predictable toggling
-  React.useEffect(() => {
-    if (!sortParam) {
-      const next = new URLSearchParams(searchParams)
-      next.set('sort', 'name,asc')
-      setSearchParams(next)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortParam])
+  // Interpret default sort internally (do not write to URL)
+  const defaultSortField: 'id' | 'name' = 'name'
+  const defaultSortDir: 'asc' | 'desc' = 'asc'
+  const hasSortParam = Boolean(sortParam)
+  const effectiveSortField = (hasSortParam ? sortField : defaultSortField) as 'id' | 'name'
+  const effectiveSortDir = hasSortParam ? sortDir : defaultSortDir
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -125,12 +122,12 @@ function RoleManagement() {
 
   function toggleSort(field: 'id' | 'name') {
     const next = new URLSearchParams(searchParams)
-    if (sortField !== field) {
+    if (effectiveSortField !== field) {
       next.delete('sort')
       next.append('sort', `${field},asc`)
     } else {
-      if (sortDir === 'asc') next.set('sort', `${field},desc`)
-      else if (sortDir === 'desc') next.delete('sort')
+      if (effectiveSortDir === 'asc') next.set('sort', `${field},desc`)
+      else if (effectiveSortDir === 'desc') next.delete('sort')
       else next.set('sort', `${field},asc`)
     }
     next.set('page', '0')
