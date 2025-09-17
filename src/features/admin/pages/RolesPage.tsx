@@ -222,7 +222,7 @@ function RoleManagement() {
         >
           <Thead>
             <Tr>
-              <Th textAlign="right" width="100px">
+              <Th textAlign="right" width="6ch">
                 ID
               </Th>
               <Th width="240px">Name</Th>
@@ -234,7 +234,7 @@ function RoleManagement() {
           <Tbody>
             {Array.from({ length: 5 }).map((_, i) => (
               <Tr key={i}>
-                <Td textAlign="right">
+                <Td textAlign="right" width="6ch">
                   <Skeleton height="16px" />
                 </Td>
                 <Td>
@@ -292,7 +292,7 @@ function RoleManagement() {
                   cursor="pointer"
                   aria-sort={sortField === 'id' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
                   textAlign="right"
-                  width="100px"
+                  width="6ch"
                 >
                   ID {sortField === 'id' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </Th>
@@ -314,7 +314,7 @@ function RoleManagement() {
                 const r: Role = { id: role.id ?? 0, name: role.name }
                 return (
                   <Tr key={role.id}>
-                    <Td textAlign="right" fontWeight="semibold">
+                    <Td textAlign="right" fontWeight="semibold" width="6ch">
                       {r.id}
                     </Td>
                     <Td>

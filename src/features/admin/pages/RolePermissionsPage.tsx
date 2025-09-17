@@ -92,7 +92,7 @@ export default function RolePermissionsPage() {
         <Table variant="simple">
           <Thead>
             <Tr>
-              <Th>ID</Th>
+              <Th textAlign="right" width="6ch">ID</Th>
               <Th>Name</Th>
               <Th>Actions</Th>
             </Tr>
@@ -100,7 +100,7 @@ export default function RolePermissionsPage() {
           <Tbody>
             {data.map((perm) => (
               <Tr key={perm.id}>
-                <Td>{perm.id}</Td>
+                <Td textAlign="right" width="6ch">{perm.id}</Td>
                 <Td>{perm.name}</Td>
                 <Td>
                   <IconButton
