@@ -1,4 +1,4 @@
-import { AddIcon, EditIcon, DeleteIcon } from '@chakra-ui/icons'
+import { AddIcon, SearchIcon } from '@chakra-ui/icons'
 import {
   Box,
   Heading,
@@ -23,12 +23,15 @@ import {
   HStack,
   Input,
   InputGroup,
+  InputLeftElement,
   InputRightElement,
   Skeleton,
   Center,
   Stack,
+  CloseButton,
 } from '@chakra-ui/react'
 import React from 'react'
+import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { useDeleteRole, useGetRoles } from '../api/hooks'
@@ -134,53 +137,112 @@ function RoleManagement() {
     setSearchParams(next)
   }
 
+  const totalCount = data?.totalElements ?? data?.content.length ?? 0
+  const resultsLabel = totalCount === 1 ? 'result' : 'results'
+
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb={4}>
-        <Heading as="h2" size="xl">
+      <Stack spacing={4} mb={4}>
+        <Heading as="h2" size="lg">
           Manage Roles
         </Heading>
-        <HStack>
-          <Box as="form" onSubmit={onSubmit}>
-            <InputGroup>
+        <Flex
+          direction={{ base: 'column', md: 'row' }}
+          align={{ base: 'stretch', md: 'center' }}
+          gap={3}
+        >
+          <Box
+            as="form"
+            onSubmit={onSubmit}
+            flex={{ base: 1, md: '1 1 320px' }}
+            maxW={{ base: 'full', md: '360px' }}
+          >
+            <InputGroup size="sm">
+              <InputLeftElement pointerEvents="none" color="gray.400">
+                <SearchIcon boxSize={3} />
+              </InputLeftElement>
               <Input
-                placeholder="Cari nama/kode/deskripsi..."
+                placeholder="Cari nama, kode, atau deskripsi"
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
-                aria-label="Search"
-                size="sm"
-                bg="gray.50"
+                aria-label="Search roles"
+                bg="white"
+                boxShadow="sm"
               />
               {qInput && (
-                <InputRightElement width="3rem">
-                  <Button size="xs" onClick={() => setQInput('')} aria-label="Clear search">
-                    ✕
-                  </Button>
+                <InputRightElement width="2.5rem">
+                  <CloseButton size="sm" onClick={() => setQInput('')} aria-label="Clear search" />
                 </InputRightElement>
               )}
             </InputGroup>
           </Box>
-          <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={onCreateOpen}>
+          <Flex
+            flex={{ base: 1, md: '1 1 auto' }}
+            justify={{ base: 'flex-start', md: 'center' }}
+            align="center"
+            minH="32px"
+          >
+            {data && (
+              <Text fontSize="sm" color="gray.600">
+                {totalCount} {resultsLabel}
+                {qParam ? ` untuk "${qParam}"` : ''}
+              </Text>
+            )}
+          </Flex>
+          <Button
+            leftIcon={<AddIcon boxSize={3} />}
+            colorScheme="teal"
+            onClick={onCreateOpen}
+            alignSelf={{ base: 'stretch', md: 'auto' }}
+          >
             Create Role
           </Button>
-        </HStack>
-      </Flex>
+        </Flex>
+      </Stack>
 
       {isLoading ? (
-        <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
+        <Table
+          variant="striped"
+          colorScheme="gray"
+          size="sm"
+          sx={{
+            'th, td': { py: 2, px: 3, fontSize: 'sm' },
+            'thead th': {
+              position: 'sticky',
+              top: 0,
+              zIndex: 0,
+              bg: 'gray.100',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: 'xs',
+              color: 'gray.500',
+            },
+            'tbody tr:hover td': { bg: 'gray.100' },
+          }}
+        >
           <Thead>
             <Tr>
-              <Th>ID</Th>
-              <Th>Name</Th>
-              <Th>Actions</Th>
+              <Th textAlign="right" width="6ch">
+                ID
+              </Th>
+              <Th width="240px">Name</Th>
+              <Th textAlign="right" width="220px">
+                Actions
+              </Th>
             </Tr>
           </Thead>
           <Tbody>
             {Array.from({ length: 5 }).map((_, i) => (
               <Tr key={i}>
-                <Td><Skeleton height="16px" /></Td>
-                <Td><Skeleton height="16px" /></Td>
-                <Td><Skeleton height="16px" /></Td>
+                <Td textAlign="right" width="6ch">
+                  <Skeleton height="16px" />
+                </Td>
+                <Td>
+                  <Skeleton height="16px" />
+                </Td>
+                <Td textAlign="right">
+                  <Skeleton height="16px" />
+                </Td>
               </Tr>
             ))}
           </Tbody>
@@ -204,13 +266,33 @@ function RoleManagement() {
         </Center>
       ) : (
         data && (
-          <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
+          <Table
+            variant="striped"
+            colorScheme="gray"
+            size="sm"
+            sx={{
+              'th, td': { py: 2, px: 3, fontSize: 'sm' },
+              'thead th': {
+                position: 'sticky',
+                top: 0,
+                zIndex: 0,
+                bg: 'gray.100',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                fontSize: 'xs',
+                color: 'gray.500',
+              },
+              'tbody tr:hover td': { bg: 'teal.50' },
+            }}
+          >
             <Thead>
               <Tr>
                 <Th
                   onClick={() => toggleSort('id')}
                   cursor="pointer"
                   aria-sort={sortField === 'id' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  textAlign="right"
+                  width="6ch"
                 >
                   ID {sortField === 'id' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </Th>
@@ -218,10 +300,13 @@ function RoleManagement() {
                   onClick={() => toggleSort('name')}
                   cursor="pointer"
                   aria-sort={sortField === 'name' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  width="240px"
                 >
                   Name {sortField === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </Th>
-                <Th>Actions</Th>
+                <Th textAlign="right" width="220px">
+                  Actions
+                </Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -229,30 +314,43 @@ function RoleManagement() {
                 const r: Role = { id: role.id ?? 0, name: role.name }
                 return (
                   <Tr key={role.id}>
-                    <Td>{r.id}</Td>
-                    <Td>{r.name}</Td>
+                    <Td textAlign="right" fontWeight="semibold" width="6ch">
+                      {r.id}
+                    </Td>
                     <Td>
-                      <Button
-                        as={Link}
-                        to={`/admin/role/${r.id}/assign`}
-                        size="sm"
-                        mr={2}
-                        leftIcon={<AddIcon />}
-                      >
-                        Permissions
-                      </Button>
-                      <IconButton
-                        aria-label="Edit role"
-                        icon={<EditIcon />}
-                        mr={2}
-                        onClick={() => handleEditClick(r)}
-                      />
-                      <IconButton
-                        aria-label="Delete role"
-                        icon={<DeleteIcon />}
-                        colorScheme="red"
-                        onClick={() => handleDeleteClick(r)}
-                      />
+                      <Text fontFamily="mono" fontWeight="medium">
+                        {r.name}
+                      </Text>
+                    </Td>
+                    <Td textAlign="right">
+                      <HStack spacing={2} justify="flex-end">
+                        <Button
+                          as={Link}
+                          to={`/admin/role/${r.id}/assign`}
+                          size="sm"
+                          variant="outline"
+                          colorScheme="teal"
+                          leftIcon={<AddIcon boxSize={3} />}
+                        >
+                          Permissions
+                        </Button>
+                        <IconButton
+                          aria-label="Edit role"
+                          icon={<FiEdit2 />}
+                          variant="ghost"
+                          colorScheme="gray"
+                          onClick={() => handleEditClick(r)}
+                          size="sm"
+                        />
+                        <IconButton
+                          aria-label="Delete role"
+                          icon={<FiTrash2 />}
+                          variant="outline"
+                          colorScheme="red"
+                          onClick={() => handleDeleteClick(r)}
+                          size="sm"
+                        />
+                      </HStack>
                     </Td>
                   </Tr>
                 )
