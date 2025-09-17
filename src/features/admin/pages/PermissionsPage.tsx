@@ -1,4 +1,4 @@
-import { AddIcon, EditIcon, DeleteIcon } from '@chakra-ui/icons'
+import { AddIcon, SearchIcon } from '@chakra-ui/icons'
 import {
   Box,
   Heading,
@@ -28,11 +28,13 @@ import {
   ModalCloseButton,
   Input,
   InputGroup,
+  InputLeftElement,
   InputRightElement,
   Center,
   HStack,
   Stack,
   Skeleton,
+  CloseButton,
 } from '@chakra-ui/react'
 import React from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -46,6 +48,7 @@ import {
 import { PermissionForm } from '../components/PermissionForm'
 
 import type { Permission, PermissionRequest } from '../types'
+import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 
 const PermissionsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -165,55 +168,116 @@ const PermissionsPage = () => {
     setSearchParams(next)
   }
 
+  const totalCount = data?.totalElements ?? data?.content.length ?? 0
+  const resultsLabel = totalCount === 1 ? 'result' : 'results'
+
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb={4}>
-        <Heading as="h2" size="xl">
+      <Stack spacing={4} mb={4}>
+        <Heading as="h2" size="lg">
           Manage Permissions
         </Heading>
-        <HStack>
-          <Box as="form" onSubmit={onSubmit}>
-            <InputGroup>
+        <Flex
+          direction={{ base: 'column', md: 'row' }}
+          align={{ base: 'stretch', md: 'center' }}
+          gap={3}
+        >
+          <Box
+            as="form"
+            onSubmit={onSubmit}
+            flex={{ base: 1, md: '1 1 320px' }}
+            maxW={{ base: 'full', md: '360px' }}
+          >
+            <InputGroup size="sm">
+              <InputLeftElement pointerEvents="none" color="gray.400">
+                <SearchIcon boxSize={3} />
+              </InputLeftElement>
               <Input
-                placeholder="Cari nama/kode/deskripsi..."
+                placeholder="Cari nama, kode, atau deskripsi"
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
-                aria-label="Search"
-                size="sm"
-                bg="gray.50"
+                aria-label="Search permissions"
+                bg="white"
+                boxShadow="sm"
               />
               {qInput && (
-                <InputRightElement width="3rem">
-                  <Button size="xs" onClick={() => setQInput('')} aria-label="Clear search">
-                    ✕
-                  </Button>
+                <InputRightElement width="2.5rem">
+                  <CloseButton size="sm" onClick={() => setQInput('')} aria-label="Clear search" />
                 </InputRightElement>
               )}
             </InputGroup>
           </Box>
-          <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={handleCreateClick}>
+          <Flex
+            flex={{ base: 1, md: '1 1 auto' }}
+            justify={{ base: 'flex-start', md: 'center' }}
+            align="center"
+            minH="32px"
+          >
+            {data && (
+              <Text fontSize="sm" color="gray.600">
+                {totalCount} {resultsLabel}
+                {qParam ? ` untuk "${qParam}"` : ''}
+              </Text>
+            )}
+          </Flex>
+          <Button
+            leftIcon={<AddIcon boxSize={3} />}
+            colorScheme="teal"
+            onClick={handleCreateClick}
+            alignSelf={{ base: 'stretch', md: 'auto' }}
+          >
             Create Permission
           </Button>
-        </HStack>
-      </Flex>
+        </Flex>
+      </Stack>
 
       {isLoading ? (
-        <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
+        <Table
+          variant="striped"
+          colorScheme="gray"
+          size="sm"
+          sx={{
+            'th, td': { py: 2, px: 3, fontSize: 'sm' },
+            'thead th': {
+              position: 'sticky',
+              top: 0,
+              zIndex: 1,
+              bg: 'gray.100',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: 'xs',
+              color: 'gray.500',
+            },
+            'tbody tr:hover td': { bg: 'gray.100' },
+          }}
+        >
           <Thead>
             <Tr>
-              <Th>ID</Th>
-              <Th>Name</Th>
+              <Th textAlign="right" width="100px">
+                ID
+              </Th>
+              <Th width="220px">Name</Th>
               <Th>Description</Th>
-              <Th>Actions</Th>
+              <Th textAlign="right" width="140px">
+                Actions
+              </Th>
             </Tr>
           </Thead>
           <Tbody>
             {Array.from({ length: 5 }).map((_, i) => (
               <Tr key={i}>
-                <Td><Skeleton height="16px" /></Td>
-                <Td><Skeleton height="16px" /></Td>
-                <Td><Skeleton height="16px" /></Td>
-                <Td><Skeleton height="16px" /></Td>
+                <Td textAlign="right">
+                  <Skeleton height="16px" />
+                </Td>
+                <Td>
+                  <Skeleton height="16px" />
+                </Td>
+                <Td>
+                  <Skeleton height="16px" />
+                </Td>
+                <Td textAlign="right">
+                  <Skeleton height="16px" />
+                </Td>
               </Tr>
             ))}
           </Tbody>
@@ -237,13 +301,33 @@ const PermissionsPage = () => {
         </Center>
       ) : (
         data && (
-          <Table variant="simple" size="sm" sx={{ 'th, td': { py: 1, px: 2, fontSize: 'sm' } }}>
+          <Table
+            variant="striped"
+            colorScheme="gray"
+            size="sm"
+            sx={{
+              'th, td': { py: 2, px: 3, fontSize: 'sm' },
+              'thead th': {
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+                bg: 'gray.100',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                fontSize: 'xs',
+                color: 'gray.500',
+              },
+              'tbody tr:hover td': { bg: 'teal.50' },
+            }}
+          >
             <Thead>
               <Tr>
                 <Th
                   onClick={() => toggleSort('id')}
                   cursor="pointer"
                   aria-sort={sortField === 'id' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  textAlign="right"
+                  width="100px"
                 >
                   ID {sortField === 'id' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </Th>
@@ -251,6 +335,7 @@ const PermissionsPage = () => {
                   onClick={() => toggleSort('name')}
                   cursor="pointer"
                   aria-sort={sortField === 'name' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  width="220px"
                 >
                   Name {sortField === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </Th>
@@ -263,7 +348,9 @@ const PermissionsPage = () => {
                 >
                   Description {sortField === 'description' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </Th>
-                <Th>Actions</Th>
+                <Th textAlign="right" width="140px">
+                  Actions
+                </Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -275,22 +362,34 @@ const PermissionsPage = () => {
                 }
                 return (
                   <Tr key={p.id}>
-                    <Td>{p.id}</Td>
-                    <Td>{p.name}</Td>
-                    <Td>{p.description}</Td>
+                    <Td textAlign="right" fontWeight="semibold">
+                      {p.id}
+                    </Td>
                     <Td>
-                      <IconButton
-                        aria-label="Edit permission"
-                        icon={<EditIcon />}
-                        mr={2}
-                        onClick={() => handleEditClick(p)}
-                      />
-                      <IconButton
-                        aria-label="Delete permission"
-                        icon={<DeleteIcon />}
-                        colorScheme="red"
-                        onClick={() => handleDeleteClick(p)}
-                      />
+                      <Text fontFamily="mono" fontWeight="medium">
+                        {p.name}
+                      </Text>
+                    </Td>
+                    <Td>{p.description}</Td>
+                    <Td textAlign="right">
+                      <HStack spacing={2} justify="flex-end">
+                        <IconButton
+                          aria-label="Edit permission"
+                          icon={<FiEdit2 />}
+                          variant="ghost"
+                          colorScheme="gray"
+                          onClick={() => handleEditClick(p)}
+                          size="sm"
+                        />
+                        <IconButton
+                          aria-label="Delete permission"
+                          icon={<FiTrash2 />}
+                          variant="outline"
+                          colorScheme="red"
+                          onClick={() => handleDeleteClick(p)}
+                          size="sm"
+                        />
+                      </HStack>
                     </Td>
                   </Tr>
                 )
