@@ -210,7 +210,7 @@ function RoleManagement() {
             'thead th': {
               position: 'sticky',
               top: 0,
-              zIndex: 1,
+              zIndex: 0,
               bg: 'gray.100',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -275,7 +275,7 @@ function RoleManagement() {
               'thead th': {
                 position: 'sticky',
                 top: 0,
-                zIndex: 1,
+                zIndex: 0,
                 bg: 'gray.100',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',

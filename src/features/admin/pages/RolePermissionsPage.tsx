@@ -98,7 +98,7 @@ export default function RolePermissionsPage() {
             'thead th': {
               position: 'sticky',
               top: 0,
-              zIndex: 1,
+              zIndex: 0,
               bg: 'gray.100',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -157,7 +157,7 @@ export default function RolePermissionsPage() {
               'thead th': {
                 position: 'sticky',
                 top: 0,
-                zIndex: 1,
+                zIndex: 0,
                 bg: 'gray.100',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
