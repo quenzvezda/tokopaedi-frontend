@@ -117,7 +117,7 @@ test.describe('Admin — search & sort (Roles/Permissions)', () => {
     await expect(page.locator('tbody tr').first().locator('td').nth(1)).toHaveText('USER', { timeout: 10000 })
 
     // Now search for USER (min length 2) to validate filtering
-    const searchInput = page.getByPlaceholder(/Cari nama\/kode\/deskripsi\.\./i)
+    const searchInput = page.getByPlaceholder(/Cari nama, kode, atau deskripsi/i)
     await searchInput.fill('US')
     await expect(page.getByRole('cell', { name: 'USER' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'ADMIN' })).not.toBeVisible()
@@ -127,7 +127,7 @@ test.describe('Admin — search & sort (Roles/Permissions)', () => {
     await expect(page).toHaveURL(/\/admin\/permissions/)
 
     // Search by q: user → 2 rows
-    const permSearch = page.getByPlaceholder(/Cari nama\/kode\/deskripsi\.\./i)
+    const permSearch = page.getByPlaceholder(/Cari nama, kode, atau deskripsi/i)
     await permSearch.fill('user')
     await expect(page.getByRole('cell', { name: 'user.read' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'user.write' })).toBeVisible()

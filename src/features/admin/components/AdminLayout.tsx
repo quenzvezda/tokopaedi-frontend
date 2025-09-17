@@ -11,10 +11,10 @@ import {
   Tooltip,
   useDisclosure,
 } from '@chakra-ui/react'
+import { FiKey, FiShield, FiUsers } from 'react-icons/fi'
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { Header, Footer } from '@/shared/ui/PageLayout'
-import { FiKey, FiShield, FiUsers } from 'react-icons/fi'
 
 const AdminLayout = () => {
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: true })

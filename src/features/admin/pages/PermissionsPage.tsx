@@ -37,6 +37,7 @@ import {
   CloseButton,
 } from '@chakra-ui/react'
 import React from 'react'
+import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 import { useSearchParams } from 'react-router-dom'
 
 import {
@@ -48,7 +49,6 @@ import {
 import { PermissionForm } from '../components/PermissionForm'
 
 import type { Permission, PermissionRequest } from '../types'
-import { FiEdit2, FiTrash2 } from 'react-icons/fi'
 
 const PermissionsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
