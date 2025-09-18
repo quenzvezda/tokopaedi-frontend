@@ -3,6 +3,37 @@ import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
+try {
+  const originalFocus = window.HTMLElement.prototype.focus
+  type FocusImpl = (this: HTMLElement, ...args: unknown[]) => unknown
+  let currentFocusImpl: FocusImpl | null =
+    typeof originalFocus === 'function' ? (originalFocus as FocusImpl) : null
+
+  Object.defineProperty(window.HTMLElement.prototype, 'focus', {
+    configurable: true,
+    enumerable: false,
+    get() {
+      const impl = currentFocusImpl
+      if (typeof impl === 'function') {
+        return function patchedFocus(this: HTMLElement, ...args: unknown[]) {
+          return (impl as FocusImpl).apply(this, args as [])
+        }
+      }
+      return () => {}
+    },
+    set(value) {
+      currentFocusImpl =
+        typeof value === 'function'
+          ? (value as FocusImpl)
+          : typeof originalFocus === 'function'
+            ? (originalFocus as FocusImpl)
+            : null
+    },
+  })
+} catch {
+  // ignore if jsdom already patched focus
+}
+
 const API_URL = 'http://localhost:8080'
 
 // This is the MSW server for unit tests (Node.js environment)

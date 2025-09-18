@@ -3,6 +3,7 @@ import {
   Box,
   Heading,
   Button,
+  useToast,
   Table,
   Thead,
   Tbody,
@@ -23,8 +24,6 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
-  ModalBody,
   ModalCloseButton,
   Input,
   InputGroup,
@@ -72,12 +71,21 @@ const PermissionsPage = () => {
   const createPermissionMutation = useCreatePermission()
   const updatePermissionMutation = useUpdatePermission()
   const deletePermissionMutation = useDeletePermission()
+  const toast = useToast()
 
   const { isOpen: isFormOpen, onOpen: onFormOpen, onClose: onFormClose } = useDisclosure()
   const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure()
 
   const [selectedPermission, setSelectedPermission] = React.useState<Permission | null>(null)
+  const [isBulkSaving, setIsBulkSaving] = React.useState(false)
   const cancelRef = React.useRef<HTMLButtonElement>(null)
+  const createButtonRef = React.useRef<HTMLButtonElement>(null)
+  const serviceFieldRef = React.useRef<HTMLInputElement>(null)
+
+  const closeForm = React.useCallback(() => {
+    setSelectedPermission(null)
+    onFormClose()
+  }, [onFormClose])
 
   const handleCreateClick = () => {
     setSelectedPermission(null)
@@ -105,14 +113,50 @@ const PermissionsPage = () => {
     }
   }
 
-  const handleFormSubmit = (data: PermissionRequest) => {
+  const handleFormSubmit = async (requests: PermissionRequest[]) => {
     if (selectedPermission) {
-      updatePermissionMutation.mutate(
-        { id: selectedPermission.id, data },
-        { onSuccess: onFormClose },
-      )
-    } else {
-      createPermissionMutation.mutate(data, { onSuccess: onFormClose })
+      const [request] = requests
+      if (!request) return
+      try {
+        await updatePermissionMutation.mutateAsync({ id: selectedPermission.id, data: request })
+        toast({ title: 'Permission updated', status: 'success', duration: 4000, isClosable: true })
+        closeForm()
+      } catch (err) {
+        toast({
+          title: 'Gagal memperbarui permission',
+          description: err instanceof Error ? err.message : undefined,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        })
+      }
+      return
+    }
+
+    setIsBulkSaving(true)
+    try {
+      for (const request of requests) {
+        await createPermissionMutation.mutateAsync(request)
+      }
+      toast({
+        title: requests.length > 1 ? 'Permissions created' : 'Permission created',
+        description:
+          requests.length > 1 ? `${requests.length} permissions berhasil dibuat.` : undefined,
+        status: 'success',
+        duration: 4000,
+        isClosable: true,
+      })
+      closeForm()
+    } catch (err) {
+      toast({
+        title: 'Gagal membuat permission',
+        description: err instanceof Error ? err.message : undefined,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setIsBulkSaving(false)
     }
   }
 
@@ -171,6 +215,22 @@ const PermissionsPage = () => {
   const totalCount = data?.totalElements ?? data?.content.length ?? 0
   const resultsLabel = totalCount === 1 ? 'result' : 'results'
 
+  const existingPermissionNames = React.useMemo(
+    () =>
+      (data?.content ?? [])
+        .map((permission) => permission.name)
+        .filter((name): name is string => Boolean(name)),
+    [data],
+  )
+
+  const formMode: 'create' | 'edit' = selectedPermission ? 'edit' : 'create'
+  const formInitialValues = selectedPermission
+    ? { name: selectedPermission.name, description: selectedPermission.description ?? null }
+    : undefined
+
+  const isSaving =
+    createPermissionMutation.isPending || updatePermissionMutation.isPending || isBulkSaving
+
   return (
     <Box>
       <Stack spacing={4} mb={4}>
@@ -225,6 +285,7 @@ const PermissionsPage = () => {
             colorScheme="teal"
             onClick={handleCreateClick}
             alignSelf={{ base: 'stretch', md: 'auto' }}
+            ref={createButtonRef}
           >
             Create Permission
           </Button>
@@ -417,25 +478,28 @@ const PermissionsPage = () => {
         </Flex>
       )}
 
-      <Modal isOpen={isFormOpen} onClose={onFormClose}>
+      <Modal
+        isOpen={isFormOpen}
+        onClose={closeForm}
+        initialFocusRef={serviceFieldRef}
+        finalFocusRef={createButtonRef}
+        size="lg"
+        scrollBehavior="inside"
+      >
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{selectedPermission ? 'Edit' : 'Create'} Permission</ModalHeader>
+        <ModalContent maxH="90vh">
+          <ModalHeader>{formMode === 'edit' ? 'Edit' : 'Create'} Permission</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            <PermissionForm
-              initialValues={
-                selectedPermission
-                  ? { name: selectedPermission.name, description: selectedPermission.description }
-                  : undefined
-              }
-              onSubmit={handleFormSubmit}
-              isSubmitting={
-                createPermissionMutation.isPending || updatePermissionMutation.isPending
-              }
-            />
-          </ModalBody>
-          <ModalFooter>{/* The form has its own submit button */}</ModalFooter>
+          <PermissionForm
+            mode={formMode}
+            initialValues={formInitialValues}
+            existingPermissionNames={existingPermissionNames}
+            currentName={selectedPermission?.name}
+            onSubmit={handleFormSubmit}
+            onCancel={closeForm}
+            isSubmitting={isSaving}
+            serviceInputRef={serviceFieldRef}
+          />
         </ModalContent>
       </Modal>
 
