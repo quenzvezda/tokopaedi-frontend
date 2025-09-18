@@ -6,12 +6,16 @@ import { defineConfig } from 'vitest/config'
 // https://vite.dev/config/
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const isTest = process.env.VITEST === 'true'
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      ...(isTest
+        ? { '@zag-js/focus-visible': path.resolve(__dirname, 'src/test/mocks/focus-visible.ts') }
+        : {}),
     },
   },
   test: {
