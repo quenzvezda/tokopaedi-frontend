@@ -483,11 +483,16 @@ const PermissionsPage = () => {
         onClose={closeForm}
         initialFocusRef={serviceFieldRef}
         finalFocusRef={createButtonRef}
-        size="lg"
+        size="xl"
         scrollBehavior="inside"
+        isCentered
       >
         <ModalOverlay />
-        <ModalContent maxH="90vh">
+        <ModalContent
+          maxH="90vh"
+          w="full"
+          maxW={{ base: 'calc(100vw - 32px)', md: '720px', lg: '880px', xl: '960px' }}
+        >
           <ModalHeader>{formMode === 'edit' ? 'Edit' : 'Create'} Permission</ModalHeader>
           <ModalCloseButton />
           <PermissionForm

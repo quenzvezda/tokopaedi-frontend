@@ -245,180 +245,216 @@ export const PermissionForm = ({
   const descriptionLength = descriptionValue.length
 
   return (
-    <Box as="form" onSubmit={onFormSubmit} noValidate>
-      <ModalBody>
-        <Stack spacing={6}>
-          <Stack spacing={4}>
-            <FormControl isInvalid={!!errors.service}>
-              <FormLabel htmlFor="service">Service</FormLabel>
-              <Input
-                id="service"
-                name={serviceRegister.name}
-                value={serviceValue}
-                onChange={(event) => handleNamePartChange('service', event.target.value)}
-                onBlur={serviceRegister.onBlur}
-                ref={(node) => {
-                  serviceRegister.ref(node)
-                  if (serviceInputRef) {
-                    serviceInputRef.current = node
-                  }
-                }}
-                autoComplete="off"
-                placeholder="mis. iam"
-                list={suggestions.services.length > 0 ? serviceListId : undefined}
-              />
-              {suggestions.services.length > 0 && (
-                <datalist id={serviceListId}>
-                  {suggestions.services.map((service) => (
-                    <option key={service} value={service} />
-                  ))}
-                </datalist>
-              )}
-              <FormErrorMessage>{errors.service?.message}</FormErrorMessage>
-            </FormControl>
+    <Box
+      as="form"
+      onSubmit={onFormSubmit}
+      noValidate
+      display="flex"
+      flexDirection="column"
+      height="100%"
+      maxH="100%"
+      overflow="hidden"
+    >
 
-            <FormControl isInvalid={!!errors.subject}>
-              <FormLabel htmlFor="subject">Subject</FormLabel>
-              <Input
-                id="subject"
-                name={subjectRegister.name}
-                value={subjectValue}
-                onChange={(event) => handleNamePartChange('subject', event.target.value)}
-                onBlur={subjectRegister.onBlur}
-                ref={subjectRegister.ref}
-                autoComplete="off"
-                placeholder="mis. permission"
-                list={suggestions.subjects.length > 0 ? subjectListId : undefined}
-              />
-              {suggestions.subjects.length > 0 && (
-                <datalist id={subjectListId}>
-                  {suggestions.subjects.map((subject) => (
-                    <option key={subject} value={subject} />
-                  ))}
-                </datalist>
-              )}
-              <FormErrorMessage>{errors.subject?.message}</FormErrorMessage>
-            </FormControl>
-
-            <FormControl isInvalid={!!errors.action}>
-              <FormLabel htmlFor="action">Action</FormLabel>
-              <Select
-                id="action"
-                name="action"
-                value={actionValue}
-                onChange={(event) => handleActionChange(event.target.value)}
-              >
-                {actionOptionsForSelect.map((action) => (
-                  <option key={action} value={action}>
-                    {action}
-                  </option>
-                ))}
-              </Select>
-              <FormErrorMessage>{errors.action?.message}</FormErrorMessage>
-            </FormControl>
-          </Stack>
-
-          {mode === 'create' && (
-            <Stack spacing={3}>
-              <Text fontWeight="semibold" fontSize="sm">
-                Bulk Create (opsional)
-              </Text>
-              <Controller
-                control={control}
-                name="bulkActions"
-                render={({ field: { value, onChange } }) => (
-                  <CheckboxGroup
-                    value={value ?? []}
-                    onChange={(vals) => {
-                      const next = Array.isArray(vals)
-                        ? vals
-                            .map((v) => v.toString().toLowerCase())
-                            .filter((v): v is BulkAction => isBulkAction(v))
-                        : []
-                      onChange(Array.from(new Set(next)))
-                    }}
-                  >
-                    <HStack spacing={4} wrap="wrap">
-                      {bulkActionOptions.map((action) => (
-                        <Checkbox key={action} value={action}>
-                          {action}
-                        </Checkbox>
-                      ))}
-                    </HStack>
-                  </CheckboxGroup>
+      <ModalBody flex="1" overflowY="auto">
+        <Stack
+          spacing={{ base: 6, xl: 8 }}
+          direction={{ base: 'column', xl: 'row' }}
+          align="stretch"
+        >
+          <Stack
+            spacing={6}
+            flex="1"
+            w="full"
+            minW={{ base: '0', xl: '360px' }}
+          >
+            <Stack spacing={4}>
+              <FormControl isInvalid={!!errors.service}>
+                <FormLabel htmlFor="service">Service</FormLabel>
+                <Input
+                  id="service"
+                  name={serviceRegister.name}
+                  value={serviceValue}
+                  onChange={(event) => handleNamePartChange('service', event.target.value)}
+                  onBlur={serviceRegister.onBlur}
+                  ref={(node) => {
+                    serviceRegister.ref(node)
+                    if (serviceInputRef) {
+                      serviceInputRef.current = node
+                    }
+                  }}
+                  autoComplete="off"
+                  placeholder="mis. iam"
+                  list={suggestions.services.length > 0 ? serviceListId : undefined}
+                />
+                {suggestions.services.length > 0 && (
+                  <datalist id={serviceListId}>
+                    {suggestions.services.map((service) => (
+                      <option key={service} value={service} />
+                    ))}
+                  </datalist>
                 )}
-              />
-              <Text fontSize="sm" color="gray.600">
-                Pilih beberapa aksi untuk membuat permission sekaligus. Setiap aksi akan dikirim dalam
-                request terpisah.
-              </Text>
-            </Stack>
-          )}
+                <FormErrorMessage>{errors.service?.message}</FormErrorMessage>
+              </FormControl>
 
-          <Stack spacing={3}>
-            <Text fontWeight="semibold" fontSize="sm">
-              Preview
-            </Text>
-            {previewNames.length === 0 ? (
-              <Text fontSize="sm" color="gray.500">
-                Lengkapi Service, Subject, dan Action untuk melihat preview.
-              </Text>
-            ) : (
-              <Stack spacing={1}>
-                {previewNames.map((name) => (
-                  <Code key={name} display="block" p={2} borderRadius="md" fontFamily="mono">
-                    {name}
-                  </Code>
-                ))}
+              <FormControl isInvalid={!!errors.subject}>
+                <FormLabel htmlFor="subject">Subject</FormLabel>
+                <Input
+                  id="subject"
+                  name={subjectRegister.name}
+                  value={subjectValue}
+                  onChange={(event) => handleNamePartChange('subject', event.target.value)}
+                  onBlur={subjectRegister.onBlur}
+                  ref={subjectRegister.ref}
+                  autoComplete="off"
+                  placeholder="mis. permission"
+                  list={suggestions.subjects.length > 0 ? subjectListId : undefined}
+                />
+                {suggestions.subjects.length > 0 && (
+                  <datalist id={subjectListId}>
+                    {suggestions.subjects.map((subject) => (
+                      <option key={subject} value={subject} />
+                    ))}
+                  </datalist>
+                )}
+                <FormErrorMessage>{errors.subject?.message}</FormErrorMessage>
+              </FormControl>
+
+              <FormControl isInvalid={!!errors.action}>
+                <FormLabel htmlFor="action">Action</FormLabel>
+                <Select
+                  id="action"
+                  name="action"
+                  value={actionValue}
+                  onChange={(event) => handleActionChange(event.target.value)}
+                >
+                  {actionOptionsForSelect.map((action) => (
+                    <option key={action} value={action}>
+                      {action}
+                    </option>
+                  ))}
+                </Select>
+                <FormErrorMessage>{errors.action?.message}</FormErrorMessage>
+              </FormControl>
+            </Stack>
+
+            {mode === 'create' && (
+              <Stack spacing={3}>
+                <Text fontWeight="semibold" fontSize="sm">
+                  Bulk Create (opsional)
+                </Text>
+                <Controller
+                  control={control}
+                  name="bulkActions"
+                  render={({ field: { value, onChange } }) => (
+                    <CheckboxGroup
+                      value={value ?? []}
+                      onChange={(vals) => {
+                        const next = Array.isArray(vals)
+                          ? vals
+                              .map((v) => v.toString().toLowerCase())
+                              .filter((v): v is BulkAction => isBulkAction(v))
+                          : []
+                        onChange(Array.from(new Set(next)))
+                      }}
+                    >
+                      <HStack spacing={4} wrap="wrap">
+                        {bulkActionOptions.map((action) => (
+                          <Checkbox key={action} value={action}>
+                            {action}
+                          </Checkbox>
+                        ))}
+                      </HStack>
+                    </CheckboxGroup>
+                  )}
+                />
+                <Text fontSize="sm" color="gray.600">
+                  Pilih beberapa aksi untuk membuat permission sekaligus. Setiap aksi akan dikirim dalam
+                  request terpisah.
+                </Text>
               </Stack>
             )}
-            <Flex justify="space-between" align="center">
-              <Text fontSize="sm" color="gray.600">
-                {previewNames.length} {previewNames.length === 1 ? 'permission' : 'permissions'}
-              </Text>
-              <IconButton
-                aria-label="Copy permission preview"
-                icon={hasCopied ? <FiCheck /> : <FiCopy />}
-                onClick={onCopy}
-                isDisabled={previewNames.length === 0}
-                size="sm"
-                variant="ghost"
+
+            <FormControl isInvalid={!!errors.description}>
+              <FormLabel htmlFor="description">Description</FormLabel>
+              <Textarea
+                id="description"
+                name={descriptionRegister.name}
+                value={descriptionValue}
+                onChange={(event) => {
+                  descriptionRegister.onChange(event)
+                  if (event.target instanceof HTMLTextAreaElement) {
+                    adjustTextareaHeight(event.target)
+                  }
+                }}
+                onBlur={descriptionRegister.onBlur}
+                ref={(node) => {
+                  descriptionRegister.ref(node)
+                  descriptionRef.current = node
+                }}
+                rows={3}
+                resize="none"
+                maxLength={240}
+                placeholder="Jelaskan detail izin"
               />
-            </Flex>
+              <Flex justify="space-between" mt={2} align="center">
+                <FormHelperText m={0} fontSize="sm">
+                  Jelaskan tujuan & cakupan izin. Hindari mengulang nama permission.
+                </FormHelperText>
+                <Text fontSize="xs" color={descriptionLength > 240 ? 'red.500' : 'gray.500'}>
+                  {descriptionLength}/240
+                </Text>
+              </Flex>
+              <FormErrorMessage>{errors.description?.message}</FormErrorMessage>
+            </FormControl>
           </Stack>
 
-          <FormControl isInvalid={!!errors.description}>
-            <FormLabel htmlFor="description">Description</FormLabel>
-            <Textarea
-              id="description"
-              name={descriptionRegister.name}
-              value={descriptionValue}
-              onChange={(event) => {
-                descriptionRegister.onChange(event)
-                if (event.target instanceof HTMLTextAreaElement) {
-                  adjustTextareaHeight(event.target)
-                }
-              }}
-              onBlur={descriptionRegister.onBlur}
-              ref={(node) => {
-                descriptionRegister.ref(node)
-                descriptionRef.current = node
-              }}
-              rows={3}
-              resize="none"
-              maxLength={240}
-              placeholder="Jelaskan detail izin"
-            />
-            <Flex justify="space-between" mt={2} align="center">
-              <FormHelperText m={0} fontSize="sm">
-                Jelaskan tujuan & cakupan izin. Hindari mengulang nama permission.
-              </FormHelperText>
-              <Text fontSize="xs" color={descriptionLength > 240 ? 'red.500' : 'gray.500'}>
-                {descriptionLength}/240
+          <Box
+            w={{ base: 'full', xl: '280px' }}
+            flex={{ base: 'none', xl: '0 0 280px' }}
+            minW={{ base: '0', xl: '260px' }}
+            alignSelf="stretch"
+          >
+            <Stack
+              spacing={3}
+              borderWidth="1px"
+              borderColor="gray.200"
+              borderRadius="lg"
+              bg="gray.50"
+              p={4}
+              h="100%"
+            >
+              <Text fontWeight="semibold" fontSize="sm">
+                Preview
               </Text>
-            </Flex>
-            <FormErrorMessage>{errors.description?.message}</FormErrorMessage>
-          </FormControl>
+              {previewNames.length === 0 ? (
+                <Text fontSize="sm" color="gray.500">
+                  Lengkapi Service, Subject, dan Action untuk melihat preview.
+                </Text>
+              ) : (
+                <Stack spacing={1} maxH="240px" overflowY="auto" pr={1}>
+                  {previewNames.map((name) => (
+                    <Code key={name} display="block" p={2} borderRadius="md" fontFamily="mono">
+                      {name}
+                    </Code>
+                  ))}
+                </Stack>
+              )}
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" color="gray.600">
+                  {previewNames.length} {previewNames.length === 1 ? 'permission' : 'permissions'}
+                </Text>
+                <IconButton
+                  aria-label="Copy permission preview"
+                  icon={hasCopied ? <FiCheck /> : <FiCopy />}
+                  onClick={onCopy}
+                  isDisabled={previewNames.length === 0}
+                  size="sm"
+                  variant="ghost"
+                />
+              </Flex>
+            </Stack>
+          </Box>
         </Stack>
       </ModalBody>
 
