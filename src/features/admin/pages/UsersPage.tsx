@@ -157,35 +157,30 @@ export default function UsersPage() {
       </Heading>
       <Stack spacing={6}>
         <Flex align="center" justify="space-between" gap={4} wrap="wrap">
-          <Box flex="1" minW="260px">
-            <form onSubmit={onSubmit}>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <SearchIcon color="gray.400" boxSize={4} />
-                </InputLeftElement>
-                <Input
-                  value={qInput}
-                  onChange={(event) => setQInput(event.target.value)}
-                  placeholder="Cari username..."
-                  variant="filled"
-                  bg="gray.50"
-                  _hover={{ bg: 'gray.100' }}
-                />
-                {qInput ? (
-                  <InputRightElement>
-                    <CloseButton size="sm" onClick={clearSearch} aria-label="Clear search" />
-                  </InputRightElement>
-                ) : null}
-              </InputGroup>
-            </form>
-            <Text fontSize="sm" color="gray.500" mt={2}>
-              {qParam ? `Filter: ${qParam}` : 'Minimal 2 karakter untuk mencari'}
-            </Text>
+          <Box as="form" onSubmit={onSubmit} maxW="340px" flex="1">
+            <InputGroup>
+              <InputLeftElement pointerEvents="none">
+                <SearchIcon color="gray.400" boxSize={4} />
+              </InputLeftElement>
+              <Input
+                value={qInput}
+                onChange={(event) => setQInput(event.target.value)}
+                placeholder="Cari username..."
+                aria-label="Cari username"
+              />
+              {qInput ? (
+                <InputRightElement>
+                  <CloseButton size="sm" onClick={clearSearch} aria-label="Clear search" />
+                </InputRightElement>
+              ) : null}
+            </InputGroup>
           </Box>
-          <Text fontSize="sm" color="gray.600">
+          <Text fontSize="sm" color="gray.600" whiteSpace="nowrap">
             Total pengguna: {totalCount}
+            {isFetching ? ' - Refreshing' : ''}
           </Text>
         </Flex>
+        <Text fontSize="xs" color="gray.500">{qParam ? `Filter: ${qParam}` : 'Minimal 2 karakter untuk mencari'}</Text>
 
         {isLoading ? (
           <Table
