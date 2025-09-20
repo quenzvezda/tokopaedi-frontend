@@ -2,6 +2,7 @@ import {
   Button,
   FormControl,
   FormErrorMessage,
+  FormHelperText,
   FormLabel,
   Input,
   Modal,
@@ -14,15 +15,17 @@ import {
   Stack,
 } from '@chakra-ui/react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useUpdateRole } from '../api/hooks'
+import { normalizeRoleName, roleNameSchema } from '../lib/roleName'
 
 import type { Role } from '../types'
 
 const updateRoleSchema = z.object({
-  name: z.string().min(1, 'Role name is required'),
+  name: roleNameSchema,
 })
 
 type UpdateRoleForm = z.infer<typeof updateRoleSchema>
@@ -36,20 +39,29 @@ interface EditRoleModalProps {
 export function EditRoleModal({ isOpen, onClose, role }: EditRoleModalProps) {
   const updateRole = useUpdateRole()
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<UpdateRoleForm>({
     resolver: zodResolver(updateRoleSchema),
-    values: {
-      name: role?.name ?? '',
+    defaultValues: {
+      name: role?.name ? normalizeRoleName(role.name, { trimEdges: true }) : '',
     },
   })
 
+  useEffect(() => {
+    reset({
+      name: role?.name ? normalizeRoleName(role.name, { trimEdges: true }) : '',
+    })
+  }, [reset, role])
+
   const onSubmit = handleSubmit(async (data) => {
     if (!role) return
-    await updateRole.mutateAsync({ id: role.id, data })
+    const payload = {
+      name: normalizeRoleName(data.name, { trimEdges: true }),
+    }
+    await updateRole.mutateAsync({ id: role.id, data: payload })
     reset()
     onClose()
   })
@@ -64,7 +76,30 @@ export function EditRoleModal({ isOpen, onClose, role }: EditRoleModalProps) {
           <Stack spacing={4}>
             <FormControl isInvalid={!!errors.name}>
               <FormLabel htmlFor="name">Role Name</FormLabel>
-              <Input id="name" type="text" {...register('name')} />
+              <Controller
+                control={control}
+                name="name"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="name"
+                    type="text"
+                    value={field.value ?? ''}
+                    onChange={(event) => {
+                      const normalized = normalizeRoleName(event.target.value)
+                      field.onChange(normalized)
+                    }}
+                    onBlur={(event) => {
+                      const trimmed = normalizeRoleName(event.target.value, { trimEdges: true })
+                      field.onChange(trimmed)
+                      field.onBlur()
+                    }}
+                  />
+                )}
+              />
+              <FormHelperText>
+                Uppercase letters only. Spaces become underscores automatically.
+              </FormHelperText>
               <FormErrorMessage>{errors.name?.message}</FormErrorMessage>
             </FormControl>
           </Stack>
