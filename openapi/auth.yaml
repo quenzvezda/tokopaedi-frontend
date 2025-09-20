@@ -4,6 +4,8 @@ info:
   version: 1.0.0
 servers:
   - url: /
+security:
+  - bearerAuth: [ ]
 paths:
   /.well-known/jwks.json:
     get:
@@ -84,7 +86,7 @@ paths:
       tags: [User]
       operationId: listUsers
       summary: List users
-      security: [ { cookieAuth: [] } ]
+      security: [ { bearerAuth: [] } ]
       parameters:
         - in: query
           name: page
@@ -130,6 +132,11 @@ paths:
               schema: { type: string }
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     RegisterRequest:
       type: object
