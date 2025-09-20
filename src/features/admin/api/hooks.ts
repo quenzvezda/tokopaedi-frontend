@@ -27,6 +27,8 @@ import {
   getUserRoles,
   listUsers,
   removeRoleFromUser,
+  type UserListParams,
+  type UserPageDto,
 } from '../services/user.service'
 
 import type { Permission, PermissionRequest, RoleRequest } from '../types'
@@ -96,10 +98,11 @@ export function useGetPermissions(params: { page: number; size: number; q?: stri
   })
 }
 
-export function useGetUsers() {
-  return useQuery({
-    queryKey: usersQueryKey,
-    queryFn: listUsers,
+export function useGetUsers(params: UserListParams) {
+  const { page, size, q, sort } = params
+  return useQuery<UserPageDto, { code?: string; message: string }, UserPageDto>({
+    queryKey: [...usersQueryKey, page, size, q ?? null, sort ?? null],
+    queryFn: () => listUsers(params),
   })
 }
 
