@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
-  createPermission,
+  createPermissionsBulk,
   deletePermission,
   listPermissions,
   updatePermission,
@@ -29,7 +29,7 @@ import {
   removeRoleFromUser,
 } from '../services/user.service'
 
-import type { PermissionRequest, RoleRequest } from '../types'
+import type { Permission, PermissionRequest, RoleRequest } from '../types'
 const rolesQueryKey = ['roles']
 const permissionsQueryKey = ['permissions']
 const rolePermissionsQueryKey = (roleId: number) => [...rolesQueryKey, roleId, 'permissions']
@@ -135,8 +135,8 @@ export function useRemoveRoleFromUser() {
 
 export function useCreatePermission() {
   const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (data: PermissionRequest) => createPermission(data),
+  return useMutation<Permission[], { code?: string; message: string }, PermissionRequest[]>({
+    mutationFn: (requests) => createPermissionsBulk(requests),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: permissionsQueryKey })
     },

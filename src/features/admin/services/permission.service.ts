@@ -8,6 +8,9 @@ const permissionsBaseUrlV1 = '/iam/api/v1/permissions'
 const permissionsBaseUrlV2 = '/iam/api/v2/permissions'
 
 export type PermissionPageDto = components['schemas']['PermissionPage']
+type PermissionDto = components['schemas']['Permission']
+type PermissionBulkRequestDto = components['schemas']['PermissionBulkRequest']
+type PermissionBulkResponseDto = components['schemas']['PermissionBulkResponse']
 
 export type PermissionListParams = { page: number; size: number; q?: string; sort?: string[] }
 
@@ -25,6 +28,22 @@ function buildSearchParams(params: PermissionListParams): URLSearchParams {
   return usp
 }
 
+function toPermission(dto: PermissionDto): Permission {
+  if (dto.id == null) throw new Error('Permission response missing identifier')
+  return {
+    id: dto.id,
+    name: dto.name,
+    description: dto.description ?? undefined,
+  }
+}
+
+function toPermissionRequestDto(request: PermissionRequest): components['schemas']['PermissionRequest'] {
+  return {
+    name: request.name,
+    description: request.description ?? null,
+  }
+}
+
 export async function listPermissions(params: PermissionListParams): Promise<PermissionPageDto> {
   const usp = buildSearchParams(params)
   try {
@@ -37,19 +56,37 @@ export async function listPermissions(params: PermissionListParams): Promise<Per
   }
 }
 
-export async function createPermission(data: PermissionRequest): Promise<Permission> {
+export async function createPermissionsBulk(requests: PermissionRequest[]): Promise<Permission[]> {
+  if (requests.length === 0) return []
+
+  const payload: PermissionBulkRequestDto = {
+    permissions: requests.map(toPermissionRequestDto),
+  }
+
+  const parsedPayload = IamSchemas.PermissionBulkRequest.safeParse(payload)
+  if (!parsedPayload.success) {
+    throw toApiError(new Error('Invalid permission bulk request payload'))
+  }
+
   try {
-    const res = await http.post<Permission>(permissionsBaseUrlV1, data)
-    return res.data
+    const res = await http.post<PermissionBulkResponseDto>(permissionsBaseUrlV2, parsedPayload.data)
+    const parsedResponse = IamSchemas.PermissionBulkResponse.safeParse(res.data)
+    if (!parsedResponse.success) throw new Error('Invalid PermissionBulkResponse schema')
+    return parsedResponse.data.created.map(toPermission)
   } catch (err) {
     throw toApiError(err)
   }
 }
 
+export async function createPermission(request: PermissionRequest): Promise<Permission> {
+  const [created] = await createPermissionsBulk([request])
+  return created
+}
+
 export async function updatePermission(id: number, data: PermissionRequest): Promise<Permission> {
   try {
-    const res = await http.put<Permission>(`${permissionsBaseUrlV1}/${id}`, data)
-    return res.data
+    const res = await http.put<PermissionDto>(`${permissionsBaseUrlV1}/${id}`, toPermissionRequestDto(data))
+    return toPermission(res.data)
   } catch (err) {
     throw toApiError(err)
   }

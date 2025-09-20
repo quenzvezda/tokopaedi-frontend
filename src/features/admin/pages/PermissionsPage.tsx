@@ -133,15 +133,16 @@ const PermissionsPage = () => {
       return
     }
 
+    if (requests.length === 0) return
+
     setIsBulkSaving(true)
     try {
-      for (const request of requests) {
-        await createPermissionMutation.mutateAsync(request)
-      }
+      const created = await createPermissionMutation.mutateAsync(requests)
+      const createdCount = created.length
       toast({
-        title: requests.length > 1 ? 'Permissions created' : 'Permission created',
+        title: createdCount > 1 ? 'Permissions created' : 'Permission created',
         description:
-          requests.length > 1 ? `${requests.length} permissions berhasil dibuat.` : undefined,
+          createdCount > 1 ? `${createdCount} permissions berhasil dibuat.` : undefined,
         status: 'success',
         duration: 4000,
         isClosable: true,

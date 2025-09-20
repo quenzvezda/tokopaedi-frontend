@@ -49,6 +49,7 @@ paths:
       tags: [Permission]
       operationId: createPermission
       summary: Create permission
+      deprecated: true
       requestBody:
         required: true
         content:
@@ -215,6 +216,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PermissionPage'
+    post:
+      tags: [Permission]
+      operationId: createPermissionsBulk
+      summary: Create permissions (bulk)
+      description: Create multiple permissions in a single request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionBulkRequest'
+      responses:
+        '200':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionBulkResponse'
+
 
   /iam/api/v2/roles:
     get:
@@ -438,6 +458,21 @@ components:
         name: { type: string }
         description: { type: string, nullable: true }
       required: [name]
+    PermissionBulkRequest:
+      type: object
+      properties:
+        permissions:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/PermissionRequest' }
+      required: [permissions]
+    PermissionBulkResponse:
+      type: object
+      properties:
+        created:
+          type: array
+          items: { $ref: '#/components/schemas/Permission' }
+      required: [created]
     Role:
       type: object
       properties:

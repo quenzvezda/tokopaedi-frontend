@@ -141,6 +141,25 @@ export const handlers = [
     return HttpResponse.json(parsed.data)
   }),
 
+  http.post(`${API_URL}/iam/api/v2/permissions`, async ({ request }) => {
+    const body = await request.json()
+    const parsed = IamSchemas.PermissionBulkRequest.safeParse(body)
+    if (!parsed.success) {
+      return HttpResponse.json({ message: 'Invalid request body' }, { status: 400 })
+    }
+    const created = parsed.data.permissions.map((permission, index) => ({
+      id: 2000 + index,
+      name: permission.name,
+      description: permission.description ?? null,
+    }))
+    const payload = { created }
+    const parsedResponse = IamSchemas.PermissionBulkResponse.safeParse(payload)
+    if (!parsedResponse.success) {
+      return HttpResponse.json({ message: 'Mock validation failed' }, { status: 500 })
+    }
+    return HttpResponse.json(parsedResponse.data)
+  }),
+
   http.get(`${API_URL}/iam/api/v1/users/:accountId/roles`, ({ params }) => {
     const { accountId } = params
     const map: Record<string, string[]> = {

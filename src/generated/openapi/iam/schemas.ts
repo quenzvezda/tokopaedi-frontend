@@ -2,7 +2,10 @@ import { z } from 'zod'
 
 type PermissionPage = {
   content: Array<Permission>
-  number?: number | undefined
+  number?: /**
+   * Zero-based page index
+   */
+  number | undefined
   size?: number | undefined
   totalElements?: number | undefined
   totalPages?: number | undefined
@@ -12,9 +15,22 @@ type Permission = {
   name: string
   description?: (string | null) | undefined
 }
+type PermissionBulkRequest = {
+  permissions: Array<PermissionRequest>
+}
+type PermissionRequest = {
+  name: string
+  description?: (string | null) | undefined
+}
+type PermissionBulkResponse = {
+  created: Array<Permission>
+}
 type RolePage = {
   content: Array<Role>
-  number?: number | undefined
+  number?: /**
+   * Zero-based page index
+   */
+  number | undefined
   size?: number | undefined
   totalElements?: number | undefined
   totalPages?: number | undefined
@@ -39,7 +55,7 @@ const ApiError = z.object({ code: z.string().nullish(), message: z.string() }).p
 const Permission: z.ZodType<Permission> = z
   .object({ id: z.number().int().nullish(), name: z.string(), description: z.string().nullish() })
   .passthrough()
-const PermissionRequest = z
+const PermissionRequest: z.ZodType<PermissionRequest> = z
   .object({ name: z.string(), description: z.string().nullish() })
   .passthrough()
 const Role: z.ZodType<Role> = z
@@ -54,6 +70,12 @@ const PermissionPage: z.ZodType<PermissionPage> = z
     totalElements: z.number().int().optional(),
     totalPages: z.number().int().optional(),
   })
+  .passthrough()
+const PermissionBulkRequest: z.ZodType<PermissionBulkRequest> = z
+  .object({ permissions: z.array(PermissionRequest).min(1) })
+  .passthrough()
+const PermissionBulkResponse: z.ZodType<PermissionBulkResponse> = z
+  .object({ created: z.array(Permission) })
   .passthrough()
 const RolePage: z.ZodType<RolePage> = z
   .object({
@@ -74,7 +96,8 @@ export const schemas = {
   Role,
   RoleRequest,
   PermissionPage,
+  PermissionBulkRequest,
+  PermissionBulkResponse,
   RolePage,
   AuthzCheckRequest,
 }
-

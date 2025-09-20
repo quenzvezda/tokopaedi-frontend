@@ -3,6 +3,8 @@ import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
+import { schemas as IamSchemas } from '@/generated/openapi/iam/schemas'
+
 try {
   const originalFocus = window.HTMLElement.prototype.focus
   type FocusImpl = (this: HTMLElement, ...args: unknown[]) => unknown
@@ -132,6 +134,20 @@ export const server = setupServer(
       totalElements: data.length,
       totalPages: Math.max(1, Math.ceil(data.length / size)),
     })
+  }),
+
+  http.post(`${API_URL}/iam/api/v2/permissions`, async ({ request }) => {
+    const body = await request.json()
+    const parsed = IamSchemas.PermissionBulkRequest.safeParse(body)
+    if (!parsed.success) {
+      return HttpResponse.json({ message: 'Invalid request body' }, { status: 400 })
+    }
+    const created = parsed.data.permissions.map((permission, index) => ({
+      id: 1000 + index,
+      name: permission.name,
+      description: permission.description ?? null,
+    }))
+    return HttpResponse.json({ created })
   }),
 
   // CATALOG

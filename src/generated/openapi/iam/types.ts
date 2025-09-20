@@ -31,7 +31,10 @@ export interface paths {
         /** List permissions */
         get: operations["listPermissions"];
         put?: never;
-        /** Create permission */
+        /**
+         * Create permission
+         * @deprecated
+         */
         post: operations["createPermission"];
         delete?: never;
         options?: never;
@@ -147,7 +150,11 @@ export interface paths {
         /** List permissions (paginated) */
         get: operations["listPermissionsV2"];
         put?: never;
-        post?: never;
+        /**
+         * Create permissions (bulk)
+         * @description Create multiple permissions in a single request.
+         */
+        post: operations["createPermissionsBulk"];
         delete?: never;
         options?: never;
         head?: never;
@@ -350,6 +357,12 @@ export interface components {
         PermissionRequest: {
             name: string;
             description?: string | null;
+        };
+        PermissionBulkRequest: {
+            permissions: components["schemas"]["PermissionRequest"][];
+        };
+        PermissionBulkResponse: {
+            created: components["schemas"]["Permission"][];
         };
         Role: {
             /** Format: int64 */
@@ -729,6 +742,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PermissionPage"];
+                };
+            };
+        };
+    };
+    createPermissionsBulk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PermissionBulkRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionBulkResponse"];
                 };
             };
         };
