@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('admin assigns role to user', async ({ page }) => {
   const userRoles: string[] = ['USER']
+  const userId = '11111111-1111-4111-8111-111111111111'
 
   await page.route('**/auth/api/v1/refresh', (r) =>
     r.fulfill({
@@ -17,11 +18,17 @@ test('admin assigns role to user', async ({ page }) => {
       json: { id: 'admin-e2e', username: 'admin-e2e', roles: ['ADMIN'], permissions: [] },
     }),
   )
-  await page.route('**/auth/api/v1/users', (r) =>
+  await page.route('**/auth/api/v1/users**', (r) =>
     r.fulfill({
       status: 200,
       headers: { 'content-type': 'application/json' },
-      json: [{ id: 'u1', username: 'user1' }],
+      json: {
+        content: [{ id: userId, username: 'user1' }],
+        number: 0,
+        size: 12,
+        totalElements: 1,
+        totalPages: 1,
+      },
     }),
   )
   await page.route('**/catalog/api/v1/products**', (r) =>
@@ -57,14 +64,14 @@ test('admin assigns role to user', async ({ page }) => {
       ],
     }),
   )
-  await page.route('**/iam/api/v1/users/u1/roles', (r) =>
+  await page.route(`**/iam/api/v1/users/${userId}/roles`, (r) =>
     r.fulfill({
       status: 200,
       headers: { 'content-type': 'application/json' },
       json: userRoles,
     }),
   )
-  await page.route('**/iam/api/v1/assign/user/u1/role/1', (r) => {
+  await page.route(`**/iam/api/v1/assign/user/${userId}/role/1`, (r) => {
     userRoles.push('ADMIN')
     r.fulfill({ status: 200, headers: { 'content-type': 'application/json' }, json: {} })
   })
@@ -103,7 +110,7 @@ test('admin assigns role to user', async ({ page }) => {
     .getByRole('link', { name: /Roles/i })
     .click()
 
-  await expect(page).toHaveURL('/admin/user/u1/roles')
+  await expect(page).toHaveURL(`/admin/user/${userId}/roles`)
   await page.getByRole('button', { name: /Assign Role/i }).click()
   const modal = page.getByRole('dialog', { name: /Assign Roles/i })
   await expect(modal).toBeVisible()

@@ -4,6 +4,8 @@ info:
   version: 1.0.0
 servers:
   - url: /
+security:
+  - bearerAuth: [ ]
 paths:
   /.well-known/jwks.json:
     get:
@@ -78,20 +80,43 @@ paths:
               schema: { $ref: '#/components/schemas/AccessTokenResponse' }
         '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
 
+
   /auth/api/v1/users:
     get:
       tags: [User]
       operationId: listUsers
       summary: List users
-      security: [ { cookieAuth: [] } ]
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: page
+          description: Zero-based page index
+          schema: { type: integer, minimum: 0, default: 0 }
+        - in: query
+          name: size
+          description: Page size (1-100)
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: q
+          description: Filter by username (min 2 chars)
+          schema: { type: string, minLength: 2 }
+        - in: query
+          name: sort
+          description: 'Sort by field and direction, e.g. "username,asc"'
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: '^(id|username),(asc|desc)$'
+          style: form
+          explode: true
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/User' }
+              schema: { $ref: '#/components/schemas/UserPage' }
+
 
   /auth/api/v1/logout:
     post:
@@ -107,6 +132,11 @@ paths:
               schema: { type: string }
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     RegisterRequest:
       type: object
@@ -139,6 +169,20 @@ components:
         id: { type: string, format: uuid }
         username: { type: string }
       required: [id, username]
+    UserPage:
+      type: object
+      description: Spring-style paginated response of User
+      properties:
+        content:
+          type: array
+          items: { $ref: '#/components/schemas/User' }
+        number:
+          type: integer
+          description: Zero-based page index
+        size: { type: integer }
+        totalElements: { type: integer }
+        totalPages: { type: integer }
+      required: [content]
     ApiError:
       type: object
       properties:

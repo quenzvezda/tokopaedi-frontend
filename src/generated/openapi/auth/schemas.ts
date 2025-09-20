@@ -16,6 +16,15 @@ const AccessTokenResponse = z
   .object({ tokenType: z.string(), accessToken: z.string(), expiresIn: z.number().int() })
   .passthrough()
 const User = z.object({ id: z.string().uuid(), username: z.string() }).passthrough()
+const UserPage = z
+  .object({
+    content: z.array(User),
+    number: z.number().int().describe('Zero-based page index').optional(),
+    size: z.number().int().optional(),
+    totalElements: z.number().int().optional(),
+    totalPages: z.number().int().optional(),
+  })
+  .passthrough()
 
 export const schemas = {
   RegisterRequest,
@@ -24,5 +33,5 @@ export const schemas = {
   LoginRequest,
   AccessTokenResponse,
   User,
+  UserPage,
 }
-

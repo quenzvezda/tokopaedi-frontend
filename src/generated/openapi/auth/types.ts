@@ -136,6 +136,15 @@ export interface components {
             id: string;
             username: string;
         };
+        /** @description Spring-style paginated response of User */
+        UserPage: {
+            content: components["schemas"]["User"][];
+            /** @description Zero-based page index */
+            number?: number;
+            size?: number;
+            totalElements?: number;
+            totalPages?: number;
+        };
         ApiError: {
             code?: string | null;
             message: string;
@@ -309,7 +318,16 @@ export interface operations {
     };
     listUsers: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Zero-based page index */
+                page?: number;
+                /** @description Page size (1-100) */
+                size?: number;
+                /** @description Filter by username (min 2 chars) */
+                q?: string;
+                /** @description Sort by field and direction, e.g. "username,asc" */
+                sort?: string[];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -322,7 +340,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"][];
+                    "application/json": components["schemas"]["UserPage"];
                 };
             };
         };

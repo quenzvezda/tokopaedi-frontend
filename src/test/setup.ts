@@ -49,6 +49,50 @@ export const server = setupServer(
     return HttpResponse.json({ message: 'Invalid credentials' }, { status: 401 })
   }),
 
+
+  http.get(`${API_URL}/auth/api/v1/users`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? '0')
+    const size = Number(url.searchParams.get('size') ?? '12')
+    const q = (url.searchParams.get('q') || '').trim().toLowerCase()
+    const sortParams = url.searchParams.getAll('sort')
+    const fixtures = [
+      { id: '11111111-1111-4111-8111-111111111111', username: 'admin' },
+      { id: '22222222-2222-4222-8222-222222222222', username: 'alice' },
+      { id: '33333333-3333-4333-8333-333333333333', username: 'bob' },
+      { id: '44444444-4444-4444-8444-444444444444', username: 'charlie' },
+    ]
+    let data = [...fixtures]
+    if (q.length >= 2) {
+      const tokens = q.split(/\s+/)
+      data = data.filter((user) => tokens.every((token) => user.username.toLowerCase().includes(token)))
+    }
+    if (sortParams.length > 0) {
+      const [field, dir] = (sortParams[0] || '').split(',') as [keyof typeof data[number] | undefined, string]
+      if (field) {
+        const direction = dir?.toLowerCase() === 'desc' ? 'desc' : 'asc'
+        data = [...data].sort((a, b) => {
+          const av = a[field] as string
+          const bv = b[field] as string
+          const compare = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' })
+          return direction === 'desc' ? compare * -1 : compare
+        })
+      }
+    } else {
+      data = [...data].sort((a, b) => a.username.localeCompare(b.username))
+    }
+    const safeSize = size > 0 ? size : 12
+    const start = page * safeSize
+    const slice = data.slice(start, start + safeSize)
+    return HttpResponse.json({
+      content: slice,
+      number: page,
+      size: safeSize,
+      totalElements: data.length,
+      totalPages: Math.max(1, Math.ceil(data.length / safeSize)),
+    })
+  }),
+
   // IAM v2 (paginated)
   http.get(`${API_URL}/iam/api/v2/roles`, ({ request }) => {
     const url = new URL(request.url)
