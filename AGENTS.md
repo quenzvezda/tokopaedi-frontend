@@ -65,6 +65,8 @@ Cara pakai singkat:
 - Kelompokkan per fitur: `features/<nama>/{components,hooks,api,services,pages,types}`.
 - Sediakan `features/<nama>/index.ts` sebagai surface publik.
 - `app/` untuk providers, routes, config; `shared/` untuk utilitas generik.
+- `test/` menampung setup & utilitas testing global; `mocks/` menyimpan MSW handlers untuk dev & E2E.
+- Simpan helper murni/domain-specific (formatter, normalizer) di `features/<nama>/lib` agar bisa dites & dipakai ulang (mis. normalisasi nama role).
 
 **Don’t**
 
@@ -108,6 +110,9 @@ Cara pakai singkat:
 - Command: `useMutation` dan invalidasi cache yang relevan.
 - Global error handling via `QueryClient` + UI feedback.
 - Validasi response dengan Zod (pada boundary service/API).
+- Gunakan `shared/lib/fetcher.ts` sebagai satu-satunya HTTP client; modul ini sudah `withCredentials`, melewatkan header Authorization untuk GET publik/endpoint auth, meng-handle refresh token otomatis via `triggerRefresh`, dan mengekspor helper `toApiError` untuk normalisasi error HTTP.
+- Normalisasi parameter daftar (search/sort/paging) di layer service dengan helper `build*SearchParams`: set `page/size`, trimming `q` (minimal 2 huruf sebelum dikirim), tambahkan default `sort` pada request saja supaya URL browser tetap bersih.
+- Propagasikan error ke UI memakai `toApiError(err)` agar snackbar/toast memiliki bentuk `{ code?, message }` konsisten.
 
 **Don’t**
 
@@ -119,6 +124,8 @@ Cara pakai singkat:
 - [ ] Minimal satu `useQuery` dan satu `useMutation` di fitur autentikasi.
 - [ ] Invalidasi cache setelah login/logout atau perubahan data.
 - [ ] Skema Zod untuk payload kritikal.
+- [ ] Helper pencarian/paginasi (`build*SearchParams`) men-trim `q` & menyuntik default `sort` di layer service, bukan di UI/router.
+- [ ] Error HTTP dikonversi melalui `toApiError` sebelum diteruskan ke UI.
 
 ---
 
@@ -220,21 +227,27 @@ Cara pakai singkat:
 **Do**
 
 - Gunakan **keduanya** secara proporsional (test pyramid).
-- Unit/Component (Vitest + RTL) untuk logic, hooks, dan form validasi; gunakan MSW untuk HTTP mocking.
+- Unit/Component (Vitest + RTL) untuk logic, hooks, dan form validasi; gunakan MSW untuk HTTP mocking via `src/test/setup.ts` (sudah mengimpor `@testing-library/jest-dom`, patch `HTMLElement.focus`, dan menjalankan `setupServer`). Tambahkan handler baru di file ini ketimbang membuat server sendiri per-test.
+- Sinkronkan handler HTTP antara `src/test/setup.ts` (unit/component) dan `src/mocks/handlers.ts` (dev server & Playwright) ketika menambah endpoint baru.
 - E2E (Playwright) untuk alur penting: login/logout/register, guard RBAC (admin vs non-admin), admin panel navigation, assign role, dan pencarian/pengurutan tabel.
 - Jalankan Playwright lewat `npm run test:e2e`; konfigurasi `workers: 1` + `fullyParallel: false` membuat suite berjalan serial supaya skenario admin search & sort stabil.
+- Pertahankan alias `@zag-js/focus-visible` di `vite.config.ts` yang menunjuk ke `src/test/mocks/focus-visible.ts` agar Vitest tidak crash pada komponen Chakra.
+- Pertahankan unit test search/sort di `src/features/admin/__tests__/*search-sort.test.ts` untuk memastikan helper `build*SearchParams` dan fixture MSW tetap sinkron.
 
 **Don’t**
 
 - Jangan menulis E2E untuk semua skenario UI kecil.
 - Jangan menyalakan kembali paralel penuh Playwright sebelum flakiness skenario admin sort terselesaikan.
 - Jangan biarkan test E2E bergantung pada data tidak deterministik.
+- Jangan mem-bypass `src/test/setup.ts` dengan membuat server MSW sendiri atau mengimpor `@zag-js/focus-visible` langsung di test.
 
 **Acceptance Criteria**
 
 - [ ] Suite unit/component tersedia untuk form & hooks kritikal (login, RBAC, dsb.).
 - [ ] Playwright mencakup autentikasi (login/logout/register), guard RBAC (403), admin panel access, assign role pengguna, dan pencarian/pengurutan tabel.
+- [ ] Handler baru ter-cover di `src/test/setup.ts` **dan** `src/mocks/handlers.ts`.
 - [ ] `npm run test`, `npm run test:e2e`, `npm run lint`, dan `npm run typecheck` dijalankan sebelum merge.
+- [ ] Unit test search/sort untuk layanan admin (roles/users/permissions) tetap hijau.
 
 ---
 
@@ -245,16 +258,20 @@ Cara pakai singkat:
 - Pakai cookie httpOnly/secure untuk sesi bila backend mendukung; token via header di fetcher.
 - Simpan user minimal di React Query cache (`useCurrentUser`).
 - Proteksi route privat dengan guard yang memeriksa user state.
+- Biarkan `AuthProvider` (`features/auth/AuthContext.tsx`) menjadi sumber kebenaran token: ia menghubungkan getter/setter ke `shared/lib/fetcher`, menjadwalkan refresh ~90 detik sebelum kedaluwarsa, dan menyinkronkan sesi antar-tab via `BroadcastChannel`.
+- Akses state auth melalui `useAuth()`; guard `RequireAuth` memanggil `useCurrentUser()` untuk bootstrap profil sekaligus memicu invalidasi cache setelah login/logout.
 
 **Don’t**
 
 - Jangan simpan token di localStorage jika bisa dihindari.
 - Jangan jadikan global store sebagai sumber kebenaran user state.
+- Jangan membuat context auth tandingan atau memanggil `triggerRefresh` langsung dari komponen.
 
 **Acceptance Criteria**
 
 - [ ] `useCurrentUser` tersedia dan dipakai di guard.
 - [ ] Route privat redirect ke login bila tidak autentik.
+- [ ] `AuthProvider` menghubungkan `setAccessTokenGetter/Setter` & `setOnAuthLogout` dari fetcher serta menjadwalkan refresh token.
 
 ---
 
@@ -264,6 +281,7 @@ Cara pakai singkat:
 
 - Gunakan `import.meta.env` (prefix `VITE_`).
 - Sediakan `.env.example`.
+- `VITE_API_BASE_URL` adalah sumber utama base URL; `VITE_GATEWAY_BASE` menjadi fallback saat variable utama kosong (lihat `shared/lib/fetcher`).
 
 **Don’t**
 
@@ -372,16 +390,18 @@ Cara pakai singkat:
 
 **Do**
 
-- Gunakan OpenAPI JSON dari Gateway aggregator untuk tipe/skema otomatis.
-- Prefer `openapi-zod-client` (Zod + TS) atau `openapi-typescript` (TS only).
+- Pertahankan kontrak di `openapi/{iam,catalog,auth}.yaml`; ubah spec dulu sebelum menyentuh kode.
+- Generate tipe dengan `openapi-typescript` dan schema Zod menggunakan `openapi-zod-client` via helper `scripts/gen-ozc-schemas-only.mjs`.
+- Regenerasi dengan skrip npm: `gen:openapi:<domain>` (tersedia varian `:types`, `:zod`, dan `gen:openapi:all` untuk gabungan). Commit ulang spec + file di `src/generated/openapi/**` setiap kali kontrak berubah.
+- Service/frontend boundary membaca tipe dari `src/generated/openapi/<domain>/types.ts` dan memvalidasi response/payload menggunakan schema di `src/generated/openapi/<domain>/schemas.ts`.
 - Simpan hasil generate di folder khusus (mis. `src/generated/openapi/<group>`), jangan modifikasi manual.
-- Tambahkan skrip npm untuk generate: `gen:openapi:iam`, `gen:openapi:catalog`, `gen:openapi:all`.
 
 **Info (Dev / Lokal)**
 
 - JSON endpoints tersedia via Gateway:
   - `http://localhost:8080/iam/v3/api-docs`
   - `http://localhost:8080/catalog/v3/api-docs`
+  - `http://localhost:8080/auth/v3/api-docs`
 - Swagger UI aggregator: `http://localhost:8080/webjars/swagger-ui/index.html?urls.primaryName=iam`
 
 **Don't**
@@ -390,9 +410,33 @@ Cara pakai singkat:
 
 **Acceptance Criteria**
 
-- [ ] (TODO) Skrip generator OpenAPI ditambahkan (iam, catalog, all).
-- [ ] (TODO) Refactor `features/catalog/services` memakai tipe/skema hasil generate.
-- [ ] (Optional) Tambahkan README singkat cara pakai generator.
+- [x] Skrip generator tersedia: `gen:openapi:iam`, `gen:openapi:catalog`, `gen:openapi:auth`, dan `gen:openapi:all` (beserta varian `:types`/`:zod`).
+- [x] Service katalog, IAM, dan auth memakai tipe + schema hasil generate.
+- [x] Dokumentasi singkat generator ada di README (`README.md#OpenAPI Codegen`).
+
+---
+
+## 19) Pola Admin Panel (Tabel & RBAC)
+
+**Do**
+
+- Kelola state tabel admin melalui `useSearchParams` (contoh: `UsersPage`, `RolesPage`): simpan `page/size/q/sort`, debounce input ~400ms, dan hanya kirim pencarian bila panjang minimal 2 karakter.
+- Letakkan helper pencarian di service (`buildUserSearchParams`, `buildSearchParams` roles/permissions) untuk men-trim query dan menyuntik default sort (mis. `username,asc` atau `name,asc`) tanpa mengotori URL browser.
+- Gunakan hooks React Query di `features/admin/api/hooks.ts` dengan pola key `[resource, page, size, q ?? null, sort ?? null]` serta invalidasi di mutation (create/update/delete/assign) agar tabel otomatis segar.
+- Taruh helper/validator domain di `features/admin/lib` & `features/admin/types` (mis. `normalizeRoleName`, `permissionFormSchema`) supaya komponen, service, dan test berbagi sumber yang sama.
+- Pakai komponen layout dari `shared/ui/PageLayout` untuk konsistensi header/footer sekaligus integrasi menu auth.
+
+**Don’t**
+
+- Jangan memodifikasi `window.location` langsung untuk pagination/filter; gunakan `setSearchParams` saja.
+- Jangan memanggil endpoint admin langsung dari komponen tanpa service/hook per resource.
+- Jangan menduplikasi logika normalisasi role/permission di komponen; rujuk helper pada folder `lib`/`types`.
+
+**Acceptance Criteria**
+
+- [ ] Halaman tabel admin memakai `useSearchParams` untuk `page/size/q/sort` dengan pencarian minimal 2 karakter.
+- [ ] Service admin menyediakan helper `build*SearchParams` plus unit test search/sort yang menutupi filter & default sort.
+- [ ] Mutasi admin (role/user/permission) menginvalidasi query key terkait (roles, permissions, user roles, dst.).
 
 ---
 
