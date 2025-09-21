@@ -220,19 +220,21 @@ Cara pakai singkat:
 **Do**
 
 - Gunakan **keduanya** secara proporsional (test pyramid).
-- Unit/Component (Vitest + RTL): logic, hooks, form validasi.
-- E2E (Playwright): smoke (home, navigasi, login, logout) + 1–2 alur kritikal.
+- Unit/Component (Vitest + RTL) untuk logic, hooks, dan form validasi; gunakan MSW untuk HTTP mocking.
+- E2E (Playwright) untuk alur penting: login/logout/register, guard RBAC (admin vs non-admin), admin panel navigation, assign role, dan pencarian/pengurutan tabel.
+- Jalankan Playwright lewat `npm run test:e2e`; konfigurasi `workers: 1` + `fullyParallel: false` membuat suite berjalan serial supaya skenario admin search & sort stabil.
 
 **Don’t**
 
 - Jangan menulis E2E untuk semua skenario UI kecil.
+- Jangan menyalakan kembali paralel penuh Playwright sebelum flakiness skenario admin sort terselesaikan.
 - Jangan biarkan test E2E bergantung pada data tidak deterministik.
 
 **Acceptance Criteria**
 
-- [ ] Suite unit/component untuk `useLogin` dan `LoginForm`.
-- [ ] Suite E2E: login berhasil & gagal, lalu logout (smoke).
-- [ ] MSW aktif untuk unit/component tests; E2E bisa MSW scenario/staging.
+- [ ] Suite unit/component tersedia untuk form & hooks kritikal (login, RBAC, dsb.).
+- [ ] Playwright mencakup autentikasi (login/logout/register), guard RBAC (403), admin panel access, assign role pengguna, dan pencarian/pengurutan tabel.
+- [ ] `npm run test`, `npm run test:e2e`, `npm run lint`, dan `npm run typecheck` dijalankan sebelum merge.
 
 ---
 
@@ -398,5 +400,6 @@ Cara pakai singkat:
 
 - Jalankan `npm install` untuk memasang dependensi.
 - Unduh browser Playwright sekali saja dengan `npx playwright install`.
+- Suite berjalan serial (konfigurasi `fullyParallel: false` dan `workers: 1`); jangan pakai flag `--fully-parallel` atau menaikkan jumlah worker agar skenario admin search & sort tetap stabil.
 - Beberapa test memakai helper dev-only `__setAccessToken`, pastikan mode dev aktif.
 - Dev server harus berjalan. Konfigurasi `webServer` di `playwright.config.ts` akan memulai `npm run dev` otomatis, atau jalankan manual sebelum `npm run test:e2e`.
