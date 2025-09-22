@@ -10,6 +10,7 @@ import {
   Checkbox,
   Stack,
   Spinner,
+  Text,
 } from '@chakra-ui/react'
 import { useState } from 'react'
 
@@ -29,7 +30,7 @@ export function AssignPermissionModal({
   onClose,
   roleId,
 }: AssignPermissionModalProps) {
-  const { data, isLoading } = useGetAvailableRolePermissions(roleId)
+  const { data, isLoading, isError, error, refetch } = useGetAvailableRolePermissions(roleId)
   const assignMutation = useAssignPermissionToRole()
   const [selected, setSelected] = useState<number[]>([])
 
@@ -56,8 +57,22 @@ export function AssignPermissionModal({
         <ModalHeader>Assign Permissions</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          {isLoading && <Spinner />}
-          {data && (
+          {isLoading && (
+            <Stack align="center">
+              <Spinner />
+            </Stack>
+          )}
+          {isError && (
+            <Stack spacing={3} align="center">
+              <Text color="red.500" textAlign="center">
+                {error?.message ?? 'Failed to load available permissions'}
+              </Text>
+              <Button size="sm" onClick={() => refetch()}>
+                Retry
+              </Button>
+            </Stack>
+          )}
+          {!isLoading && !isError && data && (
             <Stack>
               {data.map((perm) => (
                 <Checkbox

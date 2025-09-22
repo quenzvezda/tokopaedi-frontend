@@ -38,6 +38,26 @@ try {
 
 const API_URL = 'http://localhost:8080'
 
+type RolePermissionFixture = {
+  role: { id: number; name: string }
+  assigned: Array<{ id: number; name: string }>
+  available: Array<{ id: number; name: string }>
+}
+
+const rolePermissionFixtures: Record<string, RolePermissionFixture> = {
+  '1': {
+    role: { id: 1, name: 'ADMIN' },
+    assigned: [
+      { id: 10, name: 'user.read' },
+      { id: 11, name: 'user.write' },
+    ],
+    available: [
+      { id: 20, name: 'order.read' },
+      { id: 21, name: 'order.write' },
+    ],
+  },
+}
+
 // This is the MSW server for unit tests (Node.js environment)
 export const server = setupServer(
   // AUTH
@@ -178,6 +198,26 @@ export const server = setupServer(
       totalElements: data.length,
       totalPages: Math.max(1, Math.ceil(data.length / size)),
     })
+  }),
+
+  http.get(`${API_URL}/iam/api/v1/roles/:roleId`, ({ params }) => {
+    const { roleId } = params as { roleId?: string }
+    const fixture = rolePermissionFixtures[roleId ?? '']
+    if (fixture) {
+      return HttpResponse.json(fixture.role)
+    }
+    return HttpResponse.json({ message: 'Role not found' }, { status: 404 })
+  }),
+
+  http.get(`${API_URL}/iam/api/v1/roles/:roleId/permissions`, ({ params, request }) => {
+    const { roleId } = params as { roleId?: string }
+    const fixture = rolePermissionFixtures[roleId ?? '']
+    const url = new URL(request.url)
+    const available = (url.searchParams.get('available') || 'false').toLowerCase() === 'true'
+    if (!fixture) {
+      return HttpResponse.json([])
+    }
+    return HttpResponse.json(available ? fixture.available : fixture.assigned)
   }),
 
   http.post(`${API_URL}/iam/api/v2/permissions`, async ({ request }) => {

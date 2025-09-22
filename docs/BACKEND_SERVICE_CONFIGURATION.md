@@ -99,6 +99,25 @@ spring:
 - `GET /iam/internal/v1/users/{accountId}/roles`
 - `GET /iam/internal/v1/entitlements/{accountId}`
 
+#### Role Permission Endpoint Consolidation
+
+Mulai iterasi ini, daftar permission yang sudah dimiliki maupun yang masih tersedia untuk sebuah role diambil melalui endpoint yang sama: `GET /iam/api/v1/roles/{roleId}/permissions` dengan query param opsional `available`.
+
+- `available=false` (default) → mengembalikan permission yang sudah ter-assign pada role.
+- `available=true` → mengembalikan permission yang belum ter-assign dan masih tersedia.
+
+Contoh pemanggilan melalui gateway:
+
+```bash
+# Permission yang sudah dimiliki role
+curl -G "http://localhost:8080/iam/api/v1/roles/1/permissions"
+
+# Permission yang masih tersedia untuk role yang sama
+curl -G "http://localhost:8080/iam/api/v1/roles/1/permissions" --data-urlencode "available=true"
+```
+
+> Catatan: jika backend lama masih aktif dan belum menyediakan query param `available`, frontend akan menampilkan pesan error yang ramah untuk memberi tahu bahwa layanan IAM perlu diperbarui.
+
 ## Gateway Configuration
 
 **application.yml:**

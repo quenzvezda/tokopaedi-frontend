@@ -38,10 +38,15 @@ try {
 
   let code = await fs.readFile(tmpOut, 'utf8')
   // Strip zodios client pieces
-  code = code.replace(/^import\s+\{[^}]*\}\s+from\s+'@zodios\/core';?\r?\n/gm, '')
-  code = code.replace(/^const\s+endpoints\s*=\s*makeApi\([\s\S]*?\);?\r?\n/gm, '')
+  code = code.replace(/^import\s+\{[^}]*\}\s+from\s+['"]@zodios\/core['"];?\r?\n/gm, '')
+  code = code.replace(/^(?:export\s+)?const\s+\w+\s*=\s*makeApi\([\s\S]*?\);?\r?\n/gm, '')
   code = code.replace(/^export\s+const\s+api\s*=\s*new\s+Zodios[\s\S]*?;?\r?\n/gm, '')
   code = code.replace(/^export?\s*function\s+createApiClient[\s\S]*?\}\r?\n/gm, '')
+  const schemasMatch = code.match(/export const schemas = {[\s\S]*?};/)
+  if (schemasMatch) {
+    const start = code.indexOf(schemasMatch[0]) + schemasMatch[0].length
+    code = `${code.slice(0, start)}\n`
+  }
   // Tidy extra blank lines
   code = code.replace(/\n{3,}/g, '\n\n')
 
