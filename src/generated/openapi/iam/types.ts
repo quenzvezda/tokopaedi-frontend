@@ -104,34 +104,18 @@ export interface paths {
     };
     "/iam/api/v1/roles/{roleId}/permissions": {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Toggle the response between permissions already assigned to the role ("false", default) and permissions still available to be assigned ("true"). */
+                available?: boolean;
+            };
             header?: never;
             path: {
                 roleId: number;
             };
             cookie?: never;
         };
-        /** List permissions assigned to role */
+        /** List permissions for role (assigned or available) */
         get: operations["listRolePermissions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/iam/api/v1/roles/{roleId}/permissions/available": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                roleId: number;
-            };
-            cookie?: never;
-        };
-        /** List permissions not yet assigned to role */
-        get: operations["listAvailableRolePermissions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -180,34 +164,18 @@ export interface paths {
     };
     "/iam/api/v2/roles/{roleId}/permissions": {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Toggle the response between permissions already assigned to the role ("false", default) and permissions still available to be assigned ("true"). */
+                available?: boolean;
+            };
             header?: never;
             path: {
                 roleId: number;
             };
             cookie?: never;
         };
-        /** List permissions assigned to role (paginated) */
+        /** List permissions for role (assigned or available, paginated) */
         get: operations["listRolePermissionsV2"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/iam/api/v2/roles/{roleId}/permissions/available": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                roleId: number;
-            };
-            cookie?: never;
-        };
-        /** List permissions not yet assigned to role (paginated) */
-        get: operations["listAvailableRolePermissionsV2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -671,29 +639,10 @@ export interface operations {
     };
     listRolePermissions: {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                roleId: number;
+            query?: {
+                /** @description Toggle the response between permissions already assigned to the role ("false", default) and permissions still available to be assigned ("true"). */
+                available?: boolean;
             };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Permission"][];
-                };
-            };
-        };
-    };
-    listAvailableRolePermissions: {
-        parameters: {
-            query?: never;
             header?: never;
             path: {
                 roleId: number;
@@ -806,33 +755,8 @@ export interface operations {
     listRolePermissionsV2: {
         parameters: {
             query?: {
-                /** @description Zero-based page index */
-                page?: number;
-                /** @description Page size */
-                size?: number;
-            };
-            header?: never;
-            path: {
-                roleId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PermissionPage"];
-                };
-            };
-        };
-    };
-    listAvailableRolePermissionsV2: {
-        parameters: {
-            query?: {
+                /** @description Toggle the response between permissions already assigned to the role ("false", default) and permissions still available to be assigned ("true"). */
+                available?: boolean;
                 /** @description Zero-based page index */
                 page?: number;
                 /** @description Page size */

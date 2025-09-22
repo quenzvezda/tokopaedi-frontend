@@ -143,29 +143,15 @@ paths:
         name: roleId
         required: true
         schema: { type: integer, format: int64 }
+      - in: query
+        name: available
+        required: false
+        schema: { type: boolean, default: false }
+        description: Toggle the response between permissions already assigned to the role ("false", default) and permissions still available to be assigned ("true").
     get:
       tags: [Role]
       operationId: listRolePermissions
-      summary: List permissions assigned to role
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Permission' }
-
-  /iam/api/v1/roles/{roleId}/permissions/available:
-    parameters:
-      - in: path
-        name: roleId
-        required: true
-        schema: { type: integer, format: int64 }
-    get:
-      tags: [Role]
-      operationId: listAvailableRolePermissions
-      summary: List permissions not yet assigned to role
+      summary: List permissions for role (assigned or available)
       responses:
         '200':
           description: OK
@@ -279,38 +265,15 @@ paths:
         name: roleId
         required: true
         schema: { type: integer, format: int64 }
+      - in: query
+        name: available
+        required: false
+        schema: { type: boolean, default: false }
+        description: Toggle the response between permissions already assigned to the role ("false", default) and permissions still available to be assigned ("true").
     get:
       tags: [Role]
       operationId: listRolePermissionsV2
-      summary: List permissions assigned to role (paginated)
-      security: [ { bearerAuth: [] } ]
-      parameters:
-        - in: query
-          name: page
-          schema: { type: integer, minimum: 0, default: 0 }
-          description: Zero-based page index
-        - in: query
-          name: size
-          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
-          description: Page size
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermissionPage'
-
-  /iam/api/v2/roles/{roleId}/permissions/available:
-    parameters:
-      - in: path
-        name: roleId
-        required: true
-        schema: { type: integer, format: int64 }
-    get:
-      tags: [Role]
-      operationId: listAvailableRolePermissionsV2
-      summary: List permissions not yet assigned to role (paginated)
+      summary: List permissions for role (assigned or available, paginated)
       security: [ { bearerAuth: [] } ]
       parameters:
         - in: query
