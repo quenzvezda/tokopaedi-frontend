@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/profiles/me": {
+    "/profile/api/v1/profiles/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -28,7 +28,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/profiles/{userId}": {
+    "/profile/api/v1/profiles/{userId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -50,7 +50,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/profiles/me/avatar-upload-url": {
+    "/profile/api/v1/profiles/me/avatar-upload-url": {
         parameters: {
             query?: never;
             header?: never;
@@ -70,7 +70,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/profiles/me/avatar-view-url": {
+    "/profile/api/v1/profiles/me/avatar-view-url": {
         parameters: {
             query?: never;
             header?: never;
@@ -90,7 +90,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/profiles/me/stores": {
+    "/profile/api/v1/profiles/me/stores": {
         parameters: {
             query?: never;
             header?: never;
@@ -114,7 +114,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/profiles/me/stores/{storeId}": {
+    "/profile/api/v1/profiles/me/stores/{storeId}": {
         parameters: {
             query?: never;
             header?: never;
