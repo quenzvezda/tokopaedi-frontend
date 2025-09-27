@@ -78,7 +78,7 @@ export default function AvatarCropModal({
   }
 
   async function handleConfirm() {
-    if (!imageUrl || !croppedAreaPixels) {
+    if (!imageUrl || !croppedAreaPixels || !file) {
       setError('Unable to crop image, please try again.')
       return
     }
@@ -113,7 +113,7 @@ export default function AvatarCropModal({
                   aspect={1}
                   onCropChange={setCrop}
                   onZoomChange={setZoom}
-                  onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+                  onCropComplete={(_, areaPixels: Area) => setCroppedAreaPixels(areaPixels)}
                   objectFit="cover"
                   zoomWithScroll
                 />

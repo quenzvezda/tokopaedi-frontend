@@ -23,9 +23,10 @@ const PROFILE_QUERY_KEY = ['profile', 'me'] as const
 const AVATAR_QUERY_KEY = ['profile', 'avatar'] as const
 const STORES_QUERY_KEY = ['profile', 'stores'] as const
 
-export function useMyProfile() {
+export function useMyProfile(options?: { enabled?: boolean }) {
   return useQuery<UserProfileDto, ApiError>({
     queryKey: PROFILE_QUERY_KEY,
+    enabled: options?.enabled ?? true,
     queryFn: () => getMyProfileService(),
     staleTime: 60_000,
   })

@@ -20,6 +20,7 @@ import { Link as RouterLink, useSearchParams } from 'react-router-dom'
 
 import { useCurrentUser, useLogout } from '@/features/auth/api/hooks'
 import useAuth from '@/features/auth/useAuth'
+import { useAvatarViewUrl, useMyProfile } from '@/features/profile/api/hooks'
 
 export function Header({ showSearchBar = true }: { showSearchBar?: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -28,6 +29,16 @@ export function Header({ showSearchBar = true }: { showSearchBar?: boolean }) {
   const logout = useLogout()
   const user = useCurrentUser()
   const { isAuthenticated } = useAuth()
+  const profileQuery = useMyProfile({ enabled: isAuthenticated })
+  const profile = profileQuery.data
+  const avatarKey = isAuthenticated ? profile?.avatarObjectKey ?? null : null
+  const avatarQuery = useAvatarViewUrl(avatarKey)
+  const avatarUrl = avatarQuery.data?.url ?? undefined
+  const username = user.data?.username ?? null
+  const rawFullName = profile?.fullName ?? ''
+  const fullName = rawFullName ? rawFullName.trim() : ''
+  const displayName = fullName || username || 'User'
+  const displayUsername = username ? `@${username}` : null
   const closeTimer = React.useRef<number | null>(null)
 
   const clearCloseTimer = () => {
@@ -77,17 +88,17 @@ export function Header({ showSearchBar = true }: { showSearchBar?: boolean }) {
           {isAuthenticated ? (
             <Menu isOpen={isOpen} closeOnBlur={false}>
               <MenuButton onMouseEnter={openOnHover} onMouseLeave={scheduleClose}>
-                <Avatar size="sm" name={user.data?.username || 'User'} />
+                <Avatar size="sm" name={displayName} src={avatarUrl} />
               </MenuButton>
               <MenuList onMouseEnter={openOnHover} onMouseLeave={scheduleClose}>
                 <Box px={3} py={2}>
                   <HStack>
-                    <Avatar size="sm" name={user.data?.username || 'User'} />
+                    <Avatar size="sm" name={displayName} src={avatarUrl} />
                     <Box>
-                      <Text fontWeight="semibold">{user.data?.username || 'User'}</Text>
-                      {user.data?.email && (
+                      <Text fontWeight="semibold">{displayName}</Text>
+                      {displayUsername && (
                         <Text fontSize="sm" color="gray.500">
-                          {user.data.email}
+                          {displayUsername}
                         </Text>
                       )}
                     </Box>
