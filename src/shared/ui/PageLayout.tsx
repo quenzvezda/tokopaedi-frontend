@@ -99,7 +99,9 @@ export function Header({ showSearchBar = true }: { showSearchBar?: boolean }) {
                     Admin Panel
                   </MenuItem>
                 )}
-                <MenuItem isDisabled>Profile</MenuItem>
+                <MenuItem as={RouterLink} to="/profile">
+                  Profile
+                </MenuItem>
                 <MenuItem isDisabled>Orders</MenuItem>
                 <MenuItem isDisabled>Settings</MenuItem>
                 <MenuItem onClick={() => logout.mutate()}>Logout</MenuItem>

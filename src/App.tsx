@@ -22,6 +22,7 @@ const Register = lazy(() => import('./features/auth/pages/Register'))
 const CatalogList = lazy(() => import('./features/catalog/pages/CatalogList'))
 const Forbidden = lazy(() => import('./features/misc/pages/Forbidden'))
 const NotFound = lazy(() => import('./features/misc/pages/NotFound'))
+const MyProfilePage = lazy(() => import('./features/profile/pages/MyProfilePage'))
 
 function App() {
   return (
@@ -57,6 +58,16 @@ function App() {
                 <RouteBoundary>
                   <CatalogList />
                 </RouteBoundary>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <RouteBoundary>
+                    <MyProfilePage />
+                  </RouteBoundary>
+                </RequireAuth>
               }
             />
             <Route

@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: Tokopaedi Profile API (Client Contract)
+  version: 1.0.0
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+paths:
+  /profile/api/v1/profiles/me:
+    get:
+      tags: [Profile]
+      operationId: getMyProfile
+      summary: Get current user profile
+      description: "Requires authenticated user with ROLE_CUSTOMER, ROLE_SELLER, or ROLE_ADMIN."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+    put:
+      tags: [Profile]
+      operationId: updateMyProfile
+      summary: Update current user profile
+      description: "Requires authenticated user with ROLE_CUSTOMER, ROLE_SELLER, or ROLE_ADMIN."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserProfileUpdateRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /profile/api/v1/profiles/{userId}:
+    parameters:
+      - in: path
+        name: userId
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Profile]
+      operationId: getProfileById
+      summary: Get profile by user ID
+      description: "Requires ROLE_ADMIN or scope profile:profile:read."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /profile/api/v1/profiles/me/avatar-upload-url:
+    post:
+      tags: [ProfileAvatar]
+      operationId: requestAvatarUploadUrl
+      summary: Create pre-signed upload URL for avatar
+      description: "Requires authenticated user with ROLE_CUSTOMER, ROLE_SELLER, or ROLE_ADMIN."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AvatarUploadRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /profile/api/v1/profiles/me/avatar-view-url:
+    get:
+      tags: [ProfileAvatar]
+      operationId: getAvatarViewUrl
+      summary: Get pre-signed view URL for avatar
+      description: "Requires authenticated user with ROLE_CUSTOMER, ROLE_SELLER, or ROLE_ADMIN."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '404':
+          description: Avatar not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /profile/api/v1/profiles/me/stores:
+    get:
+      tags: [ProfileStore]
+      operationId: listMyStores
+      summary: List current user's stores
+      description: "Requires authenticated user with ROLE_SELLER or ROLE_ADMIN."
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StoreProfileResponse' }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '500': { description: Internal Server Error, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+    post:
+      tags: [ProfileStore]
+      operationId: createStore
+      summary: Create store for current user
+      description: "Requires authenticated user with ROLE_CUSTOMER or ROLE_SELLER. First successful store creation upgrades the account to SELLER via IAM."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StoreCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreProfileResponse'
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '500': { description: Internal Server Error, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+  /profile/api/v1/profiles/me/stores/{storeId}:
+    parameters:
+      - in: path
+        name: storeId
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [ProfileStore]
+      operationId: updateStore
+      summary: Update store for current user
+      description: "Requires authenticated user with ROLE_SELLER or ROLE_ADMIN."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StoreUpdateRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreProfileResponse'
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '404': { description: Store not found, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+        '500': { description: Internal Server Error, content: { application/json: { schema: { $ref: '#/components/schemas/ApiError' } } } }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        code: { type: string, nullable: true }
+        message: { type: string }
+        requestId: { type: string, nullable: true }
+        meta:
+          type: object
+          additionalProperties: true
+      required: [message]
+    UserProfileResponse:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        fullName: { type: string }
+        bio: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        avatarObjectKey: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [userId, fullName, createdAt, updatedAt]
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        bio:
+          type: string
+          nullable: true
+          maxLength: 500
+        phone:
+          type: string
+          nullable: true
+          maxLength: 32
+        avatarObjectKey:
+          type: string
+          nullable: true
+          description: "Object key returned by avatar upload URL endpoint."
+      required: [fullName]
+    AvatarUploadRequest:
+      type: object
+      properties:
+        fileName:
+          type: string
+          nullable: true
+          description: "Original file name, used to preserve extension."
+        contentType:
+          type: string
+          nullable: true
+          description: "MIME type for the upload (e.g., image/png)."
+    PresignedUrlResponse:
+      type: object
+      properties:
+        url: { type: string }
+        method: { type: string, enum: [GET, PUT] }
+        expiresAt: { type: string, format: date-time }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+          description: "Headers that must be included in the upload/view request."
+        objectKey:
+          type: string
+          nullable: true
+      required: [url, method, expiresAt]
+    StoreProfileResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        ownerId: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        active: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, ownerId, name, slug, active, createdAt, updatedAt]
+    StoreCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+      required: [name, slug]
+    StoreUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          minLength: 1
+        slug:
+          type: string
+          nullable: true
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+        active:
+          type: boolean
+          nullable: true
