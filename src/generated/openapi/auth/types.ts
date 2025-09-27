@@ -111,11 +111,16 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         RegisterRequest: {
+            /** @description Username unik (huruf, angka, dot, underscore) */
             username: string;
             /** Format: email */
             email: string;
             /** Format: password */
             password: string;
+            /** @description Nama lengkap pelanggan */
+            fullName: string;
+            /** @description Nomor telepon opsional (angka, boleh diawali '+') */
+            phone?: string | null;
         };
         RegisterResponse: {
             message: string;

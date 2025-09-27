@@ -23,10 +23,39 @@ import { toApiError } from '@/shared/lib/fetcher'
 
 import { useRegister } from '../api/hooks'
 
+const usernameRegex = /^[a-zA-Z0-9._]+$/
+
 const RegisterSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  username: z
+    .string()
+    .trim()
+    .min(3, 'Username must be at least 3 characters')
+    .max(32, 'Username must be at most 32 characters')
+    .regex(usernameRegex, 'Username can only contain letters, numbers, dot, and underscore'),
+  email: z
+    .string()
+    .trim()
+    .max(120, 'Email must be at most 120 characters')
+    .email('Invalid email'),
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .max(128, 'Password must be at most 128 characters'),
+  fullName: z
+    .string()
+    .trim()
+    .min(3, 'Full name must be at least 3 characters')
+    .max(120, 'Full name must be at most 120 characters'),
+  phone: z
+    .union([
+      z
+        .string()
+        .trim()
+        .regex(/^(\+?[0-9]{8,15})$/, 'Phone number must be 8-15 digits and may start with +'),
+      z.literal(''),
+    ])
+    .transform((value) => (value === '' ? undefined : value))
+    .optional(),
 })
 
 type RegisterForm = z.infer<typeof RegisterSchema>
@@ -36,7 +65,16 @@ export default function Register() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterForm>({ resolver: zodResolver(RegisterSchema) })
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(RegisterSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      fullName: '',
+      phone: '',
+    },
+  })
   const { isPending, mutateAsync } = useRegister()
   const toast = useToast()
   const navigate = useNavigate()
@@ -75,6 +113,11 @@ export default function Register() {
             boxShadow={{ base: 'sm', md: 'md' }}
           >
             <Stack spacing={4}>
+              <FormControl isInvalid={!!errors.fullName}>
+                <FormLabel>Full name</FormLabel>
+                <Input placeholder="John Doe" autoComplete="name" {...register('fullName')} />
+                <FormErrorMessage>{errors.fullName?.message}</FormErrorMessage>
+              </FormControl>
               <FormControl isInvalid={!!errors.username}>
                 <FormLabel>Username</FormLabel>
                 <Input placeholder="johndoe" autoComplete="username" {...register('username')} />
@@ -89,6 +132,11 @@ export default function Register() {
                 <FormLabel>Password</FormLabel>
                 <Input type="password" placeholder="********" autoComplete="new-password" {...register('password')} />
                 <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
+              </FormControl>
+              <FormControl isInvalid={!!errors.phone}>
+                <FormLabel>Phone (optional)</FormLabel>
+                <Input placeholder="+628123456789" autoComplete="tel" {...register('phone')} />
+                <FormErrorMessage>{errors.phone?.message}</FormErrorMessage>
               </FormControl>
               <Button type="submit" colorScheme="teal" isLoading={isPending}>
                 Register
