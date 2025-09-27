@@ -20,6 +20,7 @@ import { useForm } from 'react-hook-form'
 
 import { toApiError } from '@/shared/lib/fetcher'
 
+import AvatarCropModal from './AvatarCropModal'
 import {
   useRequestAvatarUploadUrl,
   useUpdateMyProfile,
@@ -51,6 +52,7 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
   const [isUploading, setIsUploading] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const objectUrlRef = useRef<string | null>(null)
+  const [cropState, setCropState] = useState<{ url: string; file: File } | null>(null)
 
   const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateMyProfile()
   const { mutateAsync: requestUpload } = useRequestAvatarUploadUrl()
@@ -88,6 +90,12 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
   }, [])
 
   useEffect(() => {
+    return () => {
+      if (cropState?.url) URL.revokeObjectURL(cropState.url)
+    }
+  }, [cropState])
+
+  useEffect(() => {
     if (avatarUrl && objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current)
       objectUrlRef.current = null
@@ -96,6 +104,20 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
   }, [avatarUrl])
 
   const currentAvatar = localPreview ?? avatarUrl ?? undefined
+
+  function resetFileInput() {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  function closeCropper() {
+    setCropState((prev) => {
+      if (prev?.url) URL.revokeObjectURL(prev.url)
+      return null
+    })
+    resetFileInput()
+  }
 
   async function handleAvatarUpload(file: File) {
     setAvatarError(null)
@@ -135,13 +157,35 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
       toast({ title: 'Avatar upload failed', description: message, status: 'error' })
     } finally {
       setIsUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      resetFileInput()
     }
   }
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
-    if (file) void handleAvatarUpload(file)
+    if (!file) {
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      const message = 'Please select an image file'
+      setAvatarError(message)
+      toast({ title: 'Invalid file type', description: message, status: 'error' })
+      resetFileInput()
+      return
+    }
+
+    const url = URL.createObjectURL(file)
+    setCropState({ url, file })
+  }
+
+  async function handleCropComplete(file: File) {
+    await handleAvatarUpload(file)
+    closeCropper()
+  }
+
+  function handleCropCancel() {
+    closeCropper()
   }
 
   async function onSubmit(values: ProfileFormValues) {
@@ -170,33 +214,34 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
   }
 
   return (
-    <Card>
-      <CardHeader fontWeight="semibold">My Profile</CardHeader>
-      <CardBody>
-        <Stack direction={{ base: 'column', md: 'row' }} spacing={8} align="flex-start">
-          <VStack spacing={4} align="center">
-            <Avatar size="2xl" name={profile.fullName} src={currentAvatar} />
-            <Stack direction={{ base: 'column', sm: 'row' }} spacing={3} w="full" justify="center">
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()} isLoading={isUploading}>
-                Change Avatar
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                style={{ display: 'none' }}
-              />
-              <Button variant="ghost" colorScheme="red" onClick={removeAvatar} isDisabled={!watch('avatarObjectKey')}>
-                Remove
-              </Button>
-            </Stack>
-            {avatarError && (
-              <Box color="red.500" fontSize="sm">
-                {avatarError}
-              </Box>
-            )}
-          </VStack>
+    <>
+      <Card>
+        <CardHeader fontWeight="semibold">My Profile</CardHeader>
+        <CardBody>
+          <Stack direction={{ base: 'column', md: 'row' }} spacing={8} align="flex-start">
+            <VStack spacing={4} align="center">
+              <Avatar size="2xl" name={profile.fullName} src={currentAvatar} />
+              <Stack direction={{ base: 'column', sm: 'row' }} spacing={3} w="full" justify="center">
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} isLoading={isUploading}>
+                  Change Avatar
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onFileChange}
+                  style={{ display: 'none' }}
+                />
+                <Button variant="ghost" colorScheme="red" onClick={removeAvatar} isDisabled={!watch('avatarObjectKey')}>
+                  Remove
+                </Button>
+              </Stack>
+              {avatarError && (
+                <Box color="red.500" fontSize="sm">
+                  {avatarError}
+                </Box>
+              )}
+            </VStack>
           <Box as="form" onSubmit={handleSubmit(onSubmit)} flex={1} minW={0}>
             <Stack spacing={4}>
               <FormControl isRequired isInvalid={!!errors.fullName}>
@@ -222,5 +267,16 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
         </Stack>
       </CardBody>
     </Card>
+      {cropState && (
+        <AvatarCropModal
+          isOpen={!!cropState}
+          imageUrl={cropState.url}
+          fileName={cropState.file.name}
+          mimeType={cropState.file.type || 'image/jpeg'}
+          onCancel={handleCropCancel}
+          onComplete={handleCropComplete}
+        />
+      )}
+    </>
   )
 }

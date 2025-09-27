@@ -85,3 +85,11 @@ export default tseslint.config([
   - Services validate responses with Zod from `schemas.ts` at runtime.
   - We strip zodios client from `openapi-zod-client` output (see `scripts/gen-ozc-schemas-only.mjs`), avoiding extra runtime deps.
   - Update the YAML specs, then re-run the gen scripts. Commit both specs and generated files.
+
+## Testing Checklist
+
+Use these scripts to keep the project healthy before opening a pull request:
+
+- `npm run typecheck` — ensures TypeScript builds cleanly without emitting files.
+- `npm run vitest -- --run` — executes the unit and component test suites in watch-free mode.
+- `npm run test:e2e` — runs the Playwright end-to-end scenarios against the dev server.
