@@ -4,9 +4,11 @@ test.describe('Registration UI (mocked)', () => {
   test('registers user and redirects to /login with success toast', async ({ page }) => {
     await page.goto('/register')
 
-    await page.getByLabel('Username').fill('new-user')
+    await page.getByLabel('Full name').fill('New User')
+    await page.getByLabel('Username').fill('new_user')
     await page.getByLabel('Email').fill('new-user@example.com')
     await page.getByLabel('Password').fill('password123')
+    await page.getByLabel('Phone (optional)').fill('+628123456789')
     await page.getByRole('button', { name: 'Register' }).click()
 
     // Expect to be redirected to /login

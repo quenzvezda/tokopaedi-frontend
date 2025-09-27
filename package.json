@@ -12,6 +12,7 @@
     "format:write": "prettier --write .",
     "preview": "vite preview",
     "test": "vitest",
+    "vitest": "vitest",
     "typecheck": "tsc -b --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --reporter=line",

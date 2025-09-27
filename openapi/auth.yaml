@@ -141,10 +141,31 @@ components:
     RegisterRequest:
       type: object
       properties:
-        username: { type: string }
-        email: { type: string, format: email }
-        password: { type: string, format: password }
-      required: [username, email, password]
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+          description: Username unik (huruf, angka, dot, underscore)
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        password:
+          type: string
+          format: password
+          minLength: 6
+          maxLength: 128
+        fullName:
+          type: string
+          minLength: 3
+          maxLength: 120
+          description: Nama lengkap pelanggan
+        phone:
+          type: string
+          nullable: true
+          description: Nomor telepon opsional (angka, boleh diawali '+')
+          pattern: "^(\\+?[0-9]{8,15})$"
+      required: [username, email, password, fullName]
     RegisterResponse:
       type: object
       properties:
