@@ -20,6 +20,7 @@ import { useForm } from 'react-hook-form'
 
 import { toApiError } from '@/shared/lib/fetcher'
 
+import AvatarCropModal from './AvatarCropModal'
 import {
   useRequestAvatarUploadUrl,
   useUpdateMyProfile,
@@ -51,6 +52,7 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
   const [isUploading, setIsUploading] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const objectUrlRef = useRef<string | null>(null)
+  const [pendingAvatar, setPendingAvatar] = useState<File | null>(null)
 
   const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateMyProfile()
   const { mutateAsync: requestUpload } = useRequestAvatarUploadUrl()
@@ -141,7 +143,25 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
-    if (file) void handleAvatarUpload(file)
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      const message = 'Please select an image file'
+      setAvatarError(message)
+      toast({ title: 'Invalid file type', description: message, status: 'error' })
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+    setPendingAvatar(file)
+  }
+
+  function closeCropper() {
+    setPendingAvatar(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function handleCropConfirm(file: File) {
+    setPendingAvatar(null)
+    await handleAvatarUpload(file)
   }
 
   async function onSubmit(values: ProfileFormValues) {
@@ -170,57 +190,60 @@ export default function ProfileDetailsCard({ profile, avatarUrl }: ProfileDetail
   }
 
   return (
-    <Card>
-      <CardHeader fontWeight="semibold">My Profile</CardHeader>
-      <CardBody>
-        <Stack direction={{ base: 'column', md: 'row' }} spacing={8} align="flex-start">
-          <VStack spacing={4} align="center">
-            <Avatar size="2xl" name={profile.fullName} src={currentAvatar} />
-            <Stack direction={{ base: 'column', sm: 'row' }} spacing={3} w="full" justify="center">
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()} isLoading={isUploading}>
-                Change Avatar
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                style={{ display: 'none' }}
-              />
-              <Button variant="ghost" colorScheme="red" onClick={removeAvatar} isDisabled={!watch('avatarObjectKey')}>
-                Remove
-              </Button>
-            </Stack>
-            {avatarError && (
-              <Box color="red.500" fontSize="sm">
-                {avatarError}
-              </Box>
-            )}
-          </VStack>
-          <Box as="form" onSubmit={handleSubmit(onSubmit)} flex={1} minW={0}>
-            <Stack spacing={4}>
-              <FormControl isRequired isInvalid={!!errors.fullName}>
-                <FormLabel>Full Name</FormLabel>
-                <Input {...register('fullName')} placeholder="Your full name" autoComplete="name" />
-                {errors.fullName && <FormErrorMessage>{errors.fullName.message}</FormErrorMessage>}
-              </FormControl>
-              <FormControl isInvalid={!!errors.bio}>
-                <FormLabel>Bio</FormLabel>
-                <Textarea {...register('bio')} rows={4} placeholder="Tell us about yourself" />
-                {errors.bio && <FormErrorMessage>{errors.bio.message}</FormErrorMessage>}
-              </FormControl>
-              <FormControl isInvalid={!!errors.phone}>
-                <FormLabel>Phone</FormLabel>
-                <Input {...register('phone')} placeholder="08xxxxxxxxxx" autoComplete="tel" />
-                {errors.phone && <FormErrorMessage>{errors.phone.message}</FormErrorMessage>}
-              </FormControl>
-              <Button colorScheme="teal" type="submit" isLoading={isSaving} isDisabled={!isDirty && !isUploading}>
-                Save Changes
-              </Button>
-            </Stack>
-          </Box>
-        </Stack>
-      </CardBody>
-    </Card>
+    <>
+      <Card>
+        <CardHeader fontWeight="semibold">My Profile</CardHeader>
+        <CardBody>
+          <Stack direction={{ base: 'column', md: 'row' }} spacing={8} align="flex-start">
+            <VStack spacing={4} align="center">
+              <Avatar size="2xl" name={profile.fullName} src={currentAvatar} />
+              <Stack direction={{ base: 'column', sm: 'row' }} spacing={3} w="full" justify="center">
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} isLoading={isUploading}>
+                  Change Avatar
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onFileChange}
+                  style={{ display: 'none' }}
+                />
+                <Button variant="ghost" colorScheme="red" onClick={removeAvatar} isDisabled={!watch('avatarObjectKey')}>
+                  Remove
+                </Button>
+              </Stack>
+              {avatarError && (
+                <Box color="red.500" fontSize="sm">
+                  {avatarError}
+                </Box>
+              )}
+            </VStack>
+            <Box as="form" onSubmit={handleSubmit(onSubmit)} flex={1} minW={0}>
+              <Stack spacing={4}>
+                <FormControl isRequired isInvalid={!!errors.fullName}>
+                  <FormLabel>Full Name</FormLabel>
+                  <Input {...register('fullName')} placeholder="Your full name" autoComplete="name" />
+                  {errors.fullName && <FormErrorMessage>{errors.fullName.message}</FormErrorMessage>}
+                </FormControl>
+                <FormControl isInvalid={!!errors.bio}>
+                  <FormLabel>Bio</FormLabel>
+                  <Textarea {...register('bio')} rows={4} placeholder="Tell us about yourself" />
+                  {errors.bio && <FormErrorMessage>{errors.bio.message}</FormErrorMessage>}
+                </FormControl>
+                <FormControl isInvalid={!!errors.phone}>
+                  <FormLabel>Phone</FormLabel>
+                  <Input {...register('phone')} placeholder="08xxxxxxxxxx" autoComplete="tel" />
+                  {errors.phone && <FormErrorMessage>{errors.phone.message}</FormErrorMessage>}
+                </FormControl>
+                <Button colorScheme="teal" type="submit" isLoading={isSaving} isDisabled={!isDirty && !isUploading}>
+                  Save Changes
+                </Button>
+              </Stack>
+            </Box>
+          </Stack>
+        </CardBody>
+      </Card>
+      <AvatarCropModal file={pendingAvatar} isOpen={Boolean(pendingAvatar)} onCancel={closeCropper} onConfirm={handleCropConfirm} />
+    </>
   )
 }
