@@ -112,6 +112,10 @@ The project ships with a Mock Service Worker setup so you can run the frontend w
 | `SELLER`    | `seller` | `seller123`   | `seller@tokopaedi.test`   | Has roles `SELLER` + `CUSTOMER`, owns **Seller Central Store**. |
 | `CUSTOMER`  | `customer` | `customer123` | `customer@tokopaedi.test` | Default when `VITE_MSW_ACCOUNT` is omitted. |
 
+> **Note:** Playwright E2E tests always launch the dev server without MSW through `scripts/dev-no-msw.mjs`. The tests register
+> their own service worker inside the browser context, so turning MSW on at the dev-server level leads to duplicate handlers
+> and unreliable auth redirects.
+
 The mock data mirrors the backend seed data:
 
 - Fixed UUIDs for each account and their profile information.
