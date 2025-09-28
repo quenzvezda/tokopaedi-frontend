@@ -96,6 +96,12 @@ The project ships with a Mock Service Worker setup so you can run the frontend w
    npm run dev -- --mode msw
    ```
    This loads `.env.msw`, sets `VITE_USE_MSW=true`, and automatically signs you in with a mock account.
+   When developing inside a container/VM and you need to open the app from another process
+   (for example Playwright or the browser tooling used for screenshots), expose the dev
+   server by adding `--host 0.0.0.0`:
+   ```bash
+   npm run dev -- --mode msw --host 0.0.0.0
+   ```
 3. Change the default mock account by editing `VITE_MSW_ACCOUNT` (`ADMIN`, `SELLER`, or `CUSTOMER`). Restart the dev server after changing the value.
 
 ### Default development accounts
@@ -112,5 +118,14 @@ The mock data mirrors the backend seed data:
 - IAM role/permission mapping aligned with the provided seed (catalog/profile permissions).
 - Profile service returns the seeded store for the seller account and allows CRUD operations locally.
 - Auth refresh endpoint keeps the chosen account logged in so gated pages remain accessible for UI work and screenshots.
+
+### Capturing UI screenshots in mock mode
+
+- Open the dev server with MSW enabled as shown above (include `--host 0.0.0.0` when running
+  inside a container so automation tools can reach it).
+- Navigate directly to protected routes such as `/profile`—the selected mock account is already
+  authenticated, so modals like the avatar cropper can be opened without a real backend.
+- Use your preferred tooling (Playwright, browser devtools, etc.) to trigger UI interactions and
+  take screenshots for design reviews or regression evidence.
 
 When MSW is enabled, network calls that are not mocked are passed through to the real backend (if available).
