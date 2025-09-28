@@ -7,8 +7,7 @@
     </scripts>
     <node-interpreter value="project" />
     <envs>
-      <env name="VITE_GATEWAY_BASE" value="http://localhost:8080" />
-      <env name="VITE_AUTH_REFRESH_PATH" value="/auth/api/v1/auth/refresh" />
+      <env name="VITE_USE_MSW" value="false" />
     </envs>
     <EXTENSION ID="com.intellij.lang.javascript.buildTools.npm.rc.StartBrowserRunConfigurationExtension">
       <browser name="a7bb68e0-33c0-4d6f-a81a-aac1fdb870c8" start="true" url="http://localhost:5173" />

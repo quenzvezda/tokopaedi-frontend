@@ -85,3 +85,73 @@ export default tseslint.config([
   - Services validate responses with Zod from `schemas.ts` at runtime.
   - We strip zodios client from `openapi-zod-client` output (see `scripts/gen-ozc-schemas-only.mjs`), avoiding extra runtime deps.
   - Update the YAML specs, then re-run the gen scripts. Commit both specs and generated files.
+
+## Local Mock Backend (MSW)
+
+The project ships with a Mock Service Worker setup so you can run the frontend without a live backend.
+
+1. Copy `.env.example` to `.env.local` (optional) and tweak if needed.
+2. Start the dev server with the MSW mode:
+   ```bash
+   npm run dev -- --mode msw
+   ```
+   This loads `.env.msw`, sets `VITE_USE_MSW=true`, and automatically signs you in with a mock account.
+   When developing inside a container/VM and you need to open the app from another process
+   (for example Playwright or the browser tooling used for screenshots), expose the dev
+   server by adding `--host 0.0.0.0`:
+   ```bash
+   npm run dev -- --mode msw --host 0.0.0.0
+   ```
+3. Change the default mock account by editing `VITE_MSW_ACCOUNT` (`ADMIN`, `SELLER`, or `CUSTOMER`). Restart the dev server after changing the value.
+
+### Default development accounts
+
+| Role preset | Username | Password | Email | Notes |
+|-------------|----------|----------|-------|-------|
+| `ADMIN`     | `admin`  | `admin123`    | `admin@tokopaedi.test`    | Full access, matches IAM seed role `ADMIN`. |
+| `SELLER`    | `seller` | `seller123`   | `seller@tokopaedi.test`   | Has roles `SELLER` + `CUSTOMER`, owns **Seller Central Store**. |
+| `CUSTOMER`  | `customer` | `customer123` | `customer@tokopaedi.test` | Default when `VITE_MSW_ACCOUNT` is omitted. |
+
+> **Note:** Playwright E2E tests always launch the dev server without MSW through `scripts/dev-no-msw.mjs`. The tests register
+> their own service worker inside the browser context, so turning MSW on at the dev-server level leads to duplicate handlers
+> and unreliable auth redirects.
+>
+> **Heads-up on workers:** the suite is intentionally serial. Forcing `PLAYWRIGHT_WORKERS` to a value greater than `1`
+> makes multiple browsers mutate the shared MSW mock state at the same time. When that happens, the auth guard no longer
+> sees the expected access token and the RBAC specs redirect to `/login` instead of `/403`. Leave the worker count at the
+> default (`1`) when running locally or from IntelliJ.
+
+### Running the Playwright E2E suite
+
+Run the suite through the provided npm script so Playwright can boot the dev server with the `scripts/dev-no-msw.mjs`
+helper. Keep the worker count at `1` and pass the same MSW account configuration you use during local development so
+the tests exercise the correct seeded profile data:
+
+```bash
+PLAYWRIGHT_WORKERS=1 \
+VITE_API_BASE_URL=http://localhost:18080 \
+VITE_MSW_ACCOUNT=CUSTOMER \
+VITE_USE_MSW=true \
+npm run test:e2e
+```
+
+These environment variables match the defaults used by the IntelliJ `Playwright_E2E_Tests.xml` run configuration and
+ensure the RBAC and profile scenarios stay green.
+
+The mock data mirrors the backend seed data:
+
+- Fixed UUIDs for each account and their profile information.
+- IAM role/permission mapping aligned with the provided seed (catalog/profile permissions).
+- Profile service returns the seeded store for the seller account and allows CRUD operations locally.
+- Auth refresh endpoint keeps the chosen account logged in so gated pages remain accessible for UI work and screenshots.
+
+### Capturing UI screenshots in mock mode
+
+- Open the dev server with MSW enabled as shown above (include `--host 0.0.0.0` when running
+  inside a container so automation tools can reach it).
+- Navigate directly to protected routes such as `/profile`—the selected mock account is already
+  authenticated, so modals like the avatar cropper can be opened without a real backend.
+- Use your preferred tooling (Playwright, browser devtools, etc.) to trigger UI interactions and
+  take screenshots for design reviews or regression evidence.
+
+When MSW is enabled, network calls that are not mocked are passed through to the real backend (if available).
