@@ -115,6 +115,28 @@ The project ships with a Mock Service Worker setup so you can run the frontend w
 > **Note:** Playwright E2E tests always launch the dev server without MSW through `scripts/dev-no-msw.mjs`. The tests register
 > their own service worker inside the browser context, so turning MSW on at the dev-server level leads to duplicate handlers
 > and unreliable auth redirects.
+>
+> **Heads-up on workers:** the suite is intentionally serial. Forcing `PLAYWRIGHT_WORKERS` to a value greater than `1`
+> makes multiple browsers mutate the shared MSW mock state at the same time. When that happens, the auth guard no longer
+> sees the expected access token and the RBAC specs redirect to `/login` instead of `/403`. Leave the worker count at the
+> default (`1`) when running locally or from IntelliJ.
+
+### Running the Playwright E2E suite
+
+Run the suite through the provided npm script so Playwright can boot the dev server with the `scripts/dev-no-msw.mjs`
+helper. Keep the worker count at `1` and pass the same MSW account configuration you use during local development so
+the tests exercise the correct seeded profile data:
+
+```bash
+PLAYWRIGHT_WORKERS=1 \
+VITE_API_BASE_URL=http://localhost:18080 \
+VITE_MSW_ACCOUNT=CUSTOMER \
+VITE_USE_MSW=true \
+npm run test:e2e
+```
+
+These environment variables match the defaults used by the IntelliJ `Playwright_E2E_Tests.xml` run configuration and
+ensure the RBAC and profile scenarios stay green.
 
 The mock data mirrors the backend seed data:
 
