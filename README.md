@@ -85,3 +85,32 @@ export default tseslint.config([
   - Services validate responses with Zod from `schemas.ts` at runtime.
   - We strip zodios client from `openapi-zod-client` output (see `scripts/gen-ozc-schemas-only.mjs`), avoiding extra runtime deps.
   - Update the YAML specs, then re-run the gen scripts. Commit both specs and generated files.
+
+## Local Mock Backend (MSW)
+
+The project ships with a Mock Service Worker setup so you can run the frontend without a live backend.
+
+1. Copy `.env.example` to `.env.local` (optional) and tweak if needed.
+2. Start the dev server with the MSW mode:
+   ```bash
+   npm run dev -- --mode msw
+   ```
+   This loads `.env.msw`, sets `VITE_USE_MSW=true`, and automatically signs you in with a mock account.
+3. Change the default mock account by editing `VITE_MSW_ACCOUNT` (`ADMIN`, `SELLER`, or `CUSTOMER`). Restart the dev server after changing the value.
+
+### Default development accounts
+
+| Role preset | Username | Password | Email | Notes |
+|-------------|----------|----------|-------|-------|
+| `ADMIN`     | `admin`  | `admin123`    | `admin@tokopaedi.test`    | Full access, matches IAM seed role `ADMIN`. |
+| `SELLER`    | `seller` | `seller123`   | `seller@tokopaedi.test`   | Has roles `SELLER` + `CUSTOMER`, owns **Seller Central Store**. |
+| `CUSTOMER`  | `customer` | `customer123` | `customer@tokopaedi.test` | Default when `VITE_MSW_ACCOUNT` is omitted. |
+
+The mock data mirrors the backend seed data:
+
+- Fixed UUIDs for each account and their profile information.
+- IAM role/permission mapping aligned with the provided seed (catalog/profile permissions).
+- Profile service returns the seeded store for the seller account and allows CRUD operations locally.
+- Auth refresh endpoint keeps the chosen account logged in so gated pages remain accessible for UI work and screenshots.
+
+When MSW is enabled, network calls that are not mocked are passed through to the real backend (if available).
