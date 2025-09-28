@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Playwright E2E (headed)" type="js.build_tools.npm" factoryName="npm">
+  <configuration default="false" name="Playwright E2E (headed)" type="js.build_tools.npm">
     <package-json value="$PROJECT_DIR$/package.json" />
     <command value="run" />
     <scripts>
@@ -8,11 +8,10 @@
     <arguments value="-- --headed" />
     <node-interpreter value="project" />
     <envs>
-      <env name="CI" value="false" />
-      <env name="E2E_USER" value="admin" />
-      <env name="E2E_PASS" value="admin123" />
-      <env name="E2E_NONADMIN_USER" value="ramag123" />
-      <env name="E2E_NONADMIN_PASS" value="n0c0d3123" />
+      <env name="PLAYWRIGHT_WORKERS" value="6" />
+      <env name="VITE_API_BASE_URL" value="http://localhost:18080" />
+      <env name="VITE_MSW_ACCOUNT" value="CUSTOMER" />
+      <env name="VITE_USE_MSW" value="true" />
     </envs>
     <method v="2" />
   </configuration>
