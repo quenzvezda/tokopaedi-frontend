@@ -75,7 +75,7 @@ export function Header({ showSearchBar = true }: { showSearchBar?: boolean }) {
       <Flex align="center" justify="space-between" px={6} py={3}>
         <HStack spacing={3}>
           <RouterLink to="/">
-            <Image src="/vite.svg" alt="logo" boxSize="28px" />
+            <Image src="/android-chrome-512x512.png" alt="logo" boxSize="28px" />
           </RouterLink>
           <Heading size="md">Tokopaedi</Heading>
         </HStack>
