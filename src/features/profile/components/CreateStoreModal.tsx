@@ -27,6 +27,7 @@ import { storeFormSchema, type StoreFormValues } from '../lib/schemas'
 type CreateStoreModalProps = {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
 }
 
 function slugify(value: string) {
@@ -37,7 +38,7 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-export default function CreateStoreModal({ isOpen, onClose }: CreateStoreModalProps) {
+export default function CreateStoreModal({ isOpen, onClose, onSuccess }: CreateStoreModalProps) {
   const toast = useToast()
   const { refresh } = useAuth()
   const { mutateAsync, isPending } = useCreateStore()
@@ -76,6 +77,7 @@ export default function CreateStoreModal({ isOpen, onClose }: CreateStoreModalPr
         slug: values.slug.trim(),
         description: values.description?.trim() ? values.description.trim() : null,
       })
+      onSuccess?.()
       toast({ title: 'Store created', status: 'success' })
       onClose()
       await refresh().catch(() => null)
