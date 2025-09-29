@@ -12,6 +12,7 @@ import {
   Text,
   useDisclosure,
 } from '@chakra-ui/react'
+import { useState } from 'react'
 
 import { useCurrentUser } from '@/features/auth/api/hooks'
 import { Footer, Header } from '@/shared/ui/PageLayout'
@@ -32,7 +33,9 @@ export default function MyProfilePage() {
   const { data: currentUser } = useCurrentUser()
   const roles = currentUser?.roles ?? []
   const canManageStores = roles.includes('SELLER') || roles.includes('ADMIN')
-  const storesQuery = useMyStores({ enabled: canManageStores })
+  const [hasCreatedStore, setHasCreatedStore] = useState(false)
+  const shouldLoadStores = canManageStores || hasCreatedStore
+  const storesQuery = useMyStores({ enabled: shouldLoadStores })
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   return (
@@ -54,7 +57,7 @@ export default function MyProfilePage() {
         ) : profile ? (
           <Stack spacing={8}>
             <ProfileDetailsCard profile={profile} avatarUrl={avatarQuery.data?.url ?? null} />
-            {canManageStores ? (
+            {shouldLoadStores ? (
               <StoresSection
                 stores={storesQuery.data}
                 isLoading={storesQuery.isLoading}
@@ -81,7 +84,14 @@ export default function MyProfilePage() {
         ) : null}
       </Box>
       <Footer />
-      <CreateStoreModal isOpen={isOpen} onClose={onClose} />
+      <CreateStoreModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onSuccess={() => {
+          setHasCreatedStore(true)
+          void storesQuery.refetch()
+        }}
+      />
     </Flex>
   )
 }
