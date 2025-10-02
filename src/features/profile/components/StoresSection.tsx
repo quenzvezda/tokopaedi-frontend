@@ -32,6 +32,7 @@ export default function StoresSection({ stores, isLoading, isError, error, onCre
   const toast = useToast()
   const { mutateAsync: updateStore } = useUpdateStore()
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const canCreateStore = !isLoading && !isError && (!stores || stores.length === 0)
 
   async function toggleActive(store: StoreProfileDto, next: boolean) {
     setUpdatingId(store.id)
@@ -51,9 +52,11 @@ export default function StoresSection({ stores, isLoading, isError, error, onCre
       <CardHeader>
         <HStack justify="space-between" align="center">
           <Text fontWeight="semibold">My Stores</Text>
-          <Button size="sm" colorScheme="teal" onClick={onCreateStore}>
-            New Store
-          </Button>
+          {canCreateStore ? (
+            <Button size="sm" colorScheme="teal" onClick={onCreateStore}>
+              New Store
+            </Button>
+          ) : null}
         </HStack>
       </CardHeader>
       <CardBody>
